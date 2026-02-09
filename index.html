@@ -8,28 +8,21 @@
         :root { --bg: #0d1117; --card: #161b22; --point: #00ff88; --text: #c9d1d9; --up: #f85149; --down: #58a6ff; --border: #30363d; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding-bottom: 50px; }
         header { text-align: center; padding: 15px; font-size: 1.3rem; font-weight: bold; color: var(--point); border-bottom: 1px solid var(--border); }
-        
         .controls { padding: 15px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 100; }
         .input-group { display: flex; gap: 5px; margin-bottom: 12px; }
-        .input-ticker { background: #0d1117; color: white; border: 1px solid var(--border); padding: 12px; border-radius: 4px; flex-grow: 1; text-transform: uppercase; font-size: 1rem; }
+        .input-ticker { background: #0d1117; color: white; border: 1px solid var(--border); padding: 12px; border-radius: 4px; flex-grow: 1; text-transform: uppercase; }
         .btn-add { background: var(--border); color: white; border: none; padding: 0 20px; border-radius: 4px; font-size: 1.5rem; cursor: pointer; }
-        
         .chip-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-        .ticker-chip { background: #21262d; padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; border: 1px solid var(--border); display: flex; align-items: center; }
-        .chip-del { margin-left: 8px; color: var(--up); cursor: pointer; font-weight: bold; }
-
-        .btn-analyze { background: var(--point); color: #000; font-weight: bold; border: none; padding: 15px; border-radius: 4px; width: 100%; cursor: pointer; font-size: 1rem; }
+        .ticker-chip { background: #21262d; padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; border: 1px solid var(--border); }
+        .btn-analyze { background: var(--point); color: #000; font-weight: bold; border: none; padding: 15px; border-radius: 4px; width: 100%; cursor: pointer; }
         .status-msg { text-align: center; font-size: 0.85rem; color: var(--point); margin-top: 10px; font-weight: bold; }
-
         .table-container { overflow-x: auto; width: 100%; }
         table { border-collapse: collapse; width: 100%; min-width: 1000px; font-size: 0.85rem; }
-        th { background: #161b22; color: #8b949e; padding: 12px; border-bottom: 1px solid var(--border); font-weight: 500; }
+        th { background: #161b22; color: #8b949e; padding: 12px; border-bottom: 1px solid var(--border); }
         td { padding: 15px 10px; text-align: center; border-bottom: 1px solid #21262d; }
         .sticky-col { position: sticky; left: 0; background: var(--card); z-index: 10; border-right: 2px solid var(--border); color: var(--point); font-weight: bold; }
-
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 300; justify-content: center; align-items: center; }
         .modal-content { background: var(--card); padding: 25px; border-radius: 10px; width: 85%; max-width: 400px; border: 1px solid var(--point); }
-        
         .up { color: var(--up); } .down { color: var(--down); }
     </style>
 </head>
@@ -39,31 +32,18 @@
 
 <div class="controls">
     <div class="input-group">
-        <input type="text" id="newTicker" class="input-ticker" placeholder="분석할 티커 입력 (예: TSLA)">
+        <input type="text" id="newTicker" class="input-ticker" placeholder="티커 입력 (예: TSLA)">
         <button class="btn-add" onclick="addTicker()">+</button>
     </div>
-    
     <div id="tickerChips" class="chip-container"></div>
-
-    <button id="mainBtn" class="btn-analyze" onclick="startAnalysis()">실시간 세력 분석 실행</button>
-    <div id="statusMsg" class="status-msg">티커를 추가하고 분석을 시작하세요.</div>
+    <button id="mainBtn" class="btn-analyze" onclick="startAnalysis()">실시간 분석 실행</button>
+    <div id="statusMsg" class="status-msg"></div>
 </div>
 
 <div class="table-container">
     <table>
         <thead>
-            <tr>
-                <th class="sticky-col">티커</th>
-                <th>등급</th>
-                <th>시점</th>
-                <th>규모</th>
-                <th>전일가</th>
-                <th>현재가</th>
-                <th>세력가</th>
-                <th>유형</th>
-                <th>하방</th>
-                <th>신뢰도</th>
-            </tr>
+            <tr><th class="sticky-col">티커</th><th>등급</th><th>시점</th><th>규모</th><th>전일가</th><th>현재가</th><th>세력가</th><th>유형</th><th>하방</th><th>신뢰도</th></tr>
         </thead>
         <tbody id="listBody"></tbody>
     </table>
@@ -71,173 +51,118 @@
 
 <div id="modal" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <div style="display:flex; justify-content:space-between; color:var(--point); margin-bottom:15px; font-weight:bold;">
-            <span id="modalTitle"></span><span onclick="closeModal()" style="cursor:pointer; font-size:1.5rem;">×</span>
-        </div>
+        <div id="modalTitle" style="color:var(--point); font-weight:bold; margin-bottom:15px;"></div>
         <div id="modalBody" style="font-size:0.95rem; line-height:1.7;"></div>
     </div>
 </div>
 
 <script>
-/** [1. 설정 및 저장소] **/
-const API_KEY = 'E66HQF56XV4CNNST'; // 반드시 본인 키로 교체
-let myTickers = JSON.parse(localStorage.getItem('my_tickers')) || [];
-let analysisResults = [];
+/** [설정] **/
+const API_KEY = 'E66HQF56XV4CNNST'; // <--- 여기에 본인 키를 꼭 넣어주세요!
+let myTickers = JSON.parse(localStorage.getItem('my_tickers')) || ['AAPL'];
 
-/** [2. 핵심 분석 엔진] - 요청하신 로직 누락 없이 반영 **/
-function runStrategy(ticker, data) {
-    const history = Object.values(data);
-    if (history.length < 2) return null;
+/** [분석 엔진] **/
+function analyzeData(ticker, data) {
+    try {
+        const timeSeries = data["Time Series (Daily)"];
+        const dates = Object.keys(timeSeries);
+        const history = dates.map(date => timeSeries[date]);
+        
+        const last = history[0], prev = history[1];
+        const c = parseFloat(last['4. close']), o = parseFloat(last['1. open']);
+        const pc = parseFloat(prev['4. close']), v = parseInt(last['5. volume']), pv = parseInt(prev['5. volume']);
 
-    const last = history[0], prev = history[1];
-    const c = parseFloat(last['4. close']), o = parseFloat(last['1. open']);
-    const pc = parseFloat(prev['4. close']), v = parseInt(last['5. volume']), pv = parseInt(prev['5. volume']);
+        // 매집봉 감지 로직
+        const isStealth = (v > pv * 4.0) && (Math.abs(c-o)/o < 0.05);
+        
+        // 세력 평단가 (100일 가중 평균)
+        let vSum = 0, pvSum = 0;
+        history.slice(0, 100).forEach(d => {
+            const dv = parseInt(d['5. volume']);
+            vSum += dv;
+            pvSum += (parseFloat(d['4. close']) * dv);
+        });
+        const whaleAvg = pvSum / vSum;
+        const gap = ((whaleAvg - c) / c * 100);
 
-    // 매집봉 & 스텔스 탐지 (거래량 왜곡)
-    const isStealth = (v > pv * 4.5) && (Math.abs(c - o) / o < 0.045);
-    
-    // 세력 평단가(POC) 계산 (100일 기준)
-    let vSum = 0, pvSum = 0;
-    history.slice(0, 100).forEach(d => {
-        const dv = parseInt(d['5. volume']);
-        vSum += dv;
-        pvSum += (parseFloat(d['4. close']) * dv);
-    });
-    const whaleAvg = pvSum / vSum;
-    const gap = ((whaleAvg - c) / c * 100);
+        let score = 60;
+        if(isStealth) score += 30;
+        if(gap > 10) score += 10;
+        
+        const grade = score > 85 ? 'S' : (score > 75 ? 'A' : 'B');
 
-    // 점수 및 등급 (S, A, B)
-    let score = 60;
-    if (isStealth) score += 30;
-    if (gap > 10) score += 9;
-    
-    const grade = score > 85 ? 'S' : (score > 75 ? 'A' : 'B');
-    
-    // 유형 판별
-    let type = "조용한대기";
-    if (c > parseFloat(prev['2. high'])) type = "상방테스트";
-    else if (v < pv * 0.4 && c < pc) type = "하방공포조성";
-    else if (gap > 20) type = "세력과다낙폭";
-
-    return {
-        ticker,
-        grade: `${grade} (${score}%)`,
-        timing: score > 88 ? "오늘" : "1~3일내",
-        scale: `A (${(c*1.4).toFixed(2)}/${(c*2).toFixed(2)})`,
-        prev: pc.toFixed(2),
-        curr: `${c.toFixed(2)} (${((c-pc)/pc*100).toFixed(1)}%)`,
-        whale: `${whaleAvg.toFixed(2)} (${gap > 0 ? '+' : ''}${gap.toFixed(1)}%)`,
-        type,
-        down: `${(c*0.8).toFixed(2)} (-20%)`,
-        rel: score + "%",
-        reasons: isStealth ? ["▶ 스텔스 매집봉 포착 (거래량 왜곡)", "▶ 세력 이탈 흔적 없음"] : ["▶ 매집봉 탐색 중", "▶ 장기 횡보 또는 하락 구간"]
-    };
+        return {
+            ticker, grade: `${grade} (${score}%)`, timing: score > 88 ? "오늘" : "1~3일내",
+            scale: `A (${(c*1.5).toFixed(2)})`, prev: pc.toFixed(2), curr: `${c.toFixed(2)} (${((c-pc)/pc*100).toFixed(1)}%)`,
+            whale: `${whaleAvg.toFixed(2)} (${gap.toFixed(1)}%)`, type: gap > 15 ? "세력매집" : "횡보중",
+            down: `${(c*0.8).toFixed(2)}`, rel: score + "%",
+            reasons: isStealth ? ["▶ 스텔스 매집봉 포착", "▶ 거래량 왜곡 감지"] : ["▶ 특이사항 없음"]
+        };
+    } catch (e) { return { ticker, error: "데이터 해석 실패" }; }
 }
 
-/** [3. 앱 컨트롤 로직] **/
+/** [UI 제어] **/
 function renderChips() {
-    document.getElementById('tickerChips').innerHTML = myTickers.map(t => `
-        <div class="ticker-chip">${t}<span class="chip-del" onclick="removeTicker('${t}')">×</span></div>
-    `).join('');
+    document.getElementById('tickerChips').innerHTML = myTickers.map(t => `<div class="ticker-chip">${t}</div>`).join('');
 }
 
 function addTicker() {
-    const input = document.getElementById('newTicker');
-    const val = input.value.toUpperCase().trim();
+    const val = document.getElementById('newTicker').value.toUpperCase().trim();
     if(val && !myTickers.includes(val)) {
         myTickers.push(val);
         localStorage.setItem('my_tickers', JSON.stringify(myTickers));
-        input.value = '';
         renderChips();
     }
 }
 
-function removeTicker(t) {
-    myTickers = myTickers.filter(i => i !== t);
-    localStorage.setItem('my_tickers', JSON.stringify(myTickers));
-    renderChips();
-}
-
 async function startAnalysis() {
-    if(API_KEY === 'YOUR_API_KEY') return alert("API 키를 입력하세요.");
-    if(!myTickers.length) return alert("티커를 먼저 추가하세요.");
-
-    const btn = document.getElementById('mainBtn'), msg = document.getElementById('statusMsg');
     const body = document.getElementById('listBody');
+    const msg = document.getElementById('statusMsg');
+    body.innerHTML = ""; 
     
-    btn.disabled = true;
-    body.innerHTML = ''; // 기존 결과 청소
-    analysisResults = [];
-
-    for (let i = 0; i < myTickers.length; i++) {
-        const t = myTickers[i];
-        msg.innerText = `${t} 분석 중... (${i+1}/${myTickers.length})`;
-        
+    for (const t of myTickers) {
+        msg.innerText = `${t} 호출 중...`;
         try {
-            const r = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${t}&apikey=${API_KEY}`);
-            const j = await r.json();
+            const resp = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${t}&apikey=${API_KEY}`);
+            const data = await resp.json();
             
-            if (j["Time Series (Daily)"]) {
-                const res = runStrategy(t, j["Time Series (Daily)"]);
-                if(res) {
-                    analysisResults.push(res);
-                    appendRow(res); // 결과 즉시 행 추가
-                }
-            } else if (j["Note"]) {
-                msg.innerText = "API 제한 발생! 1분 후 다시 시도하세요.";
-                break;
+            if (data["Note"]) {
+                appendError(t, "API 제한 (1분 대기 필요)");
+                break; 
             }
-        } catch(e) { console.error(t + " 분석 실패"); }
+            
+            if (data["Time Series (Daily)"]) {
+                const res = analyzeData(t, data);
+                appendRow(res);
+            } else {
+                appendError(t, "데이터 없음 (티커 확인)");
+            }
+        } catch (e) { appendError(t, "연결 실패"); }
         
-        // 다음 티커 전 대기 (13초)
-        if (i < myTickers.length - 1) await new Promise(r => setTimeout(r, 13000));
+        await new Promise(r => setTimeout(r, 13000)); // 무료 키는 12초 이상 쉬어야 함
     }
-    
-    btn.disabled = false;
-    msg.innerText = "분석 완료: " + new Date().toLocaleTimeString();
-    localStorage.setItem('sr_last_run', JSON.stringify(analysisResults));
+    msg.innerText = "분석 종료";
 }
 
 function appendRow(i) {
-    const body = document.getElementById('listBody');
     const row = document.createElement('tr');
-    row.onclick = () => showDetail(i);
-    row.innerHTML = `
-        <td class="sticky-col">${i.ticker}</td>
-        <td class="up">${i.grade}</td>
-        <td><span style="background:#30363d; padding:2px 5px; border-radius:3px;">${i.timing}</span></td>
-        <td>${i.scale}</td>
-        <td>${i.prev}</td>
-        <td class="up">${i.curr}</td>
-        <td>${i.whale}</td>
-        <td>${i.type}</td>
-        <td class="down">${i.down}</td>
-        <td>${i.rel}</td>
-    `;
-    body.appendChild(row);
+    row.onclick = () => {
+        document.getElementById('modalTitle').innerText = i.ticker;
+        document.getElementById('modalBody').innerText = i.reasons.join('\n');
+        document.getElementById('modal').style.display = 'flex';
+    };
+    row.innerHTML = `<td class="sticky-col">${i.ticker}</td><td class="up">${i.grade}</td><td>${i.timing}</td><td>${i.scale}</td><td>${i.prev}</td><td class="up">${i.curr}</td><td>${i.whale}</td><td>${i.type}</td><td>${i.down}</td><td>${i.rel}</td>`;
+    document.getElementById('listBody').appendChild(row);
 }
 
-function showDetail(item) {
-    document.getElementById('modalTitle').innerText = item.ticker + " 상세 분석";
-    document.getElementById('modalBody').innerHTML = `
-        <div style="background:#1c2128; padding:15px; border-radius:5px; border:1px solid #30363d;">
-            ${item.reasons.join('<br>')}
-        </div>
-        <p style="font-size:0.8rem; color:#8b949e; margin-top:10px;">* 매집봉 유무와 세력 평단가(${item.whale})를 기준으로 산출된 결과입니다.</p>
-    `;
-    document.getElementById('modal').style.display = 'flex';
+function appendError(t, text) {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td class="sticky-col">${t}</td><td colspan="9" style="color:orange;">${text}</td>`;
+    document.getElementById('listBody').appendChild(row);
 }
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
-window.onload = () => {
-    renderChips();
-    const saved = localStorage.getItem('sr_last_run');
-    if(saved) {
-        analysisResults = JSON.parse(saved);
-        analysisResults.forEach(res => appendRow(res));
-    }
-};
+window.onload = renderChips;
 </script>
 </body>
 </html>
