@@ -2,53 +2,44 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SR Board Pro - V4.7</title>
+    <title>SR Board Pro - V4.8</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         :root { --bg: #f5f5f7; --point: #007aff; --up: #ff3b30; --down: #007aff; --text: #1d1d1f; --border: #d2d2d7; }
         body { margin: 0; font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); }
-        
         header { position: sticky; top: 0; z-index: 200; background: #fff; padding: 15px; text-align: center; font-weight: 800; border-bottom: 1px solid var(--border); }
-        
-        .controls { background: #fff; border-bottom: 1px solid var(--border); overflow: hidden; transition: max-height 0.3s ease; }
+        .controls { background: #fff; border-bottom: 1px solid var(--border); overflow: hidden; transition: max-height 0.3s; }
         .controls.collapsed { max-height: 0; }
         .control-inner { padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        
-        .input-box { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; font-size: 1rem; }
-        .btn-analyze { background: var(--point); color: #fff; border: none; padding: 16px; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 1.05rem; }
-        .toggle-btn { width: 100%; padding: 10px; background: #e5e5ea; border: none; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: #3a3a3c; }
-
+        .input-box { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; }
+        .btn-analyze { background: var(--point); color: #fff; border: none; padding: 16px; border-radius: 12px; cursor: pointer; font-weight: 700; }
+        .toggle-btn { width: 100%; padding: 10px; background: #e5e5ea; border: none; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
         .table-container { overflow: auto; height: calc(100vh - 120px); background: #fff; }
         table { border-collapse: collapse; width: 100%; min-width: 1000px; }
-        
         thead { position: sticky; top: 0; z-index: 150; background: #f5f5f7; }
-        th { padding: 14px 8px; font-size: 0.8rem; border-bottom: 2px solid var(--border); color: #48484a; }
-        
-        td { padding: 18px 8px; text-align: center; border-bottom: 1px solid #f2f2f7; font-size: 0.9rem; background: #fff; }
-        
-        .sticky-col { position: sticky; left: 0; background: #fff !important; z-index: 100; font-weight: 800; border-right: 1px solid var(--border); width: 90px; }
-        
+        th { padding: 14px 8px; font-size: 0.75rem; border-bottom: 2px solid var(--border); color: #48484a; }
+        td { padding: 18px 8px; text-align: center; border-bottom: 1px solid #f2f2f7; font-size: 0.85rem; }
+        .sticky-col { position: sticky; left: 0; background: #fff !important; z-index: 100; font-weight: 800; border-right: 1px solid var(--border); width: 85px; }
         .up { color: var(--up); font-weight: bold; }
-        .down { color: var(--down); }
-        .sub-val { font-size: 0.75rem; color: #8e8e93; display: block; margin-top: 2px; }
+        .sub-val { font-size: 0.7rem; color: #8e8e93; display: block; }
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; max-height: 70vh; overflow-y: auto; }
     </style>
 </head>
 <body>
 
-<header>SR BOARD PRO V4.7</header>
-
-<button class="toggle-btn" onclick="toggleControls()">▼ 분석 설정창 토글</button>
-
+<header>SR BOARD PRO V4.8</header>
+<button class="toggle-btn" onclick="toggleControls()">▼ 분석 설정 및 티커 관리</button>
 <div class="controls" id="controlsSection">
     <div class="control-inner">
-        <input type="password" id="apiKey" class="input-box" placeholder="Alpha Vantage API Key">
+        <input type="password" id="apiKey" class="input-box" placeholder="API Key">
         <div style="display:flex; gap:8px;">
-            <input type="text" id="newTicker" class="input-box" placeholder="티커 입력">
-            <button onclick="addTicker()" style="padding:0 20px; background:#1d1d1f; color:#fff; border-radius:10px; border:none; font-weight:bold;">+</button>
+            <input type="text" id="newTicker" class="input-box" placeholder="TICKER">
+            <button onclick="addTicker()" style="padding:0 20px; background:#1d1d1f; color:#fff; border-radius:10px; border:none;">+</button>
         </div>
         <div id="tickerChips"></div>
-        <button class="btn-analyze" onclick="startAnalysis()">실시간 정밀 분석 실행</button>
-        <div id="statusMsg" style="text-align:center; font-size:0.85rem; color:var(--point); font-weight:600;"></div>
+        <button class="btn-analyze" onclick="startAnalysis()">전략 로직 기반 분석 실행</button>
+        <div id="statusMsg" style="text-align:center; font-size:0.8rem; color:var(--point); margin-top:8px; font-weight:600;"></div>
     </div>
 </div>
 
@@ -56,131 +47,119 @@
     <table>
         <thead>
             <tr>
-                <th class="sticky-col">티커</th>
-                <th>등급(S-Score)</th>
-                <th>폭발시기</th>
-                <th>폭발규모</th>
-                <th>기준 종가</th>
-                <th>세력평단(괴리율)</th>
-                <th>유형분류</th>
-                <th>하방라인</th>
-                <th>신뢰도</th>
+                <th class="sticky-col">티커</th><th>등급(S-Score)</th><th>폭발시기</th><th>폭발규모</th><th>기준 종가</th><th>세력평단(괴리)</th><th>유형분류</th><th>하방라인</th><th>신뢰도</th>
             </tr>
         </thead>
         <tbody id="listBody"></tbody>
     </table>
 </div>
 
+<div id="modal" onclick="this.style.display='none'"><div class="modal-content" onclick="event.stopPropagation()"><div id="modalTitle" style="font-weight:bold;margin-bottom:15px;font-size:1.1rem;border-bottom:1px solid #eee;padding-bottom:10px;"></div><div id="modalBody" style="white-space:pre-wrap;line-height:1.6;font-size:0.9rem;"></div></div></div>
+
 <script>
 let myTickers = JSON.parse(localStorage.getItem('my_tickers')) || [];
-let analysisRunning = false;
+let analysisResults = [];
 
 function toggleControls() { document.getElementById('controlsSection').classList.toggle('collapsed'); }
-function renderChips() { document.getElementById('tickerChips').innerHTML = myTickers.map(t => `<span style="display:inline-flex; align-items:center; background:#f2f2f7; padding:6px 12px; border-radius:20px; font-size:0.85rem; margin:0 5px 5px 0; border:1px solid #d2d2d7;">${t}<span style="margin-left:8px;cursor:pointer;color:#999" onclick="removeTicker('${t}')">×</span></span>`).join(''); }
+function renderChips() { document.getElementById('tickerChips').innerHTML = myTickers.map(t => `<span style="display:inline-flex; align-items:center; background:#eee; padding:5px 10px; border-radius:15px; font-size:0.8rem; margin:0 5px 5px 0;">${t}<span style="margin-left:6px;cursor:pointer" onclick="removeTicker('${t}')">×</span></span>`).join(''); }
 function addTicker() { const v = document.getElementById('newTicker').value.toUpperCase().trim(); if(v && !myTickers.includes(v)) { myTickers.push(v); localStorage.setItem('my_tickers', JSON.stringify(myTickers)); renderChips(); } }
 function removeTicker(t) { myTickers = myTickers.filter(i => i !== t); localStorage.setItem('my_tickers', JSON.stringify(myTickers)); renderChips(); }
 
-async function startAnalysis() {
-    if(analysisRunning) return;
-    const key = document.getElementById('apiKey').value.trim();
-    if(!key) return alert("API Key를 입력하세요.");
-    
-    analysisRunning = true;
-    const body = document.getElementById('listBody');
-    const msg = document.getElementById('statusMsg');
-    body.innerHTML = ""; 
-
-    for (let i = 0; i < myTickers.length; i++) {
-        const t = myTickers[i];
-        msg.innerText = `${t} 분석 중...`;
-        
-        try {
-            const res = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${t}&apikey=${key}`);
-            const data = await res.json();
-            
-            if (data["Note"]) { appendError(t, "API 한도 초과"); break; }
-
-            const timeKey = Object.keys(data).find(k => k.includes("Time Series"));
-            if (timeKey) {
-                const processed = processLogicV47(t, data[timeKey]);
-                appendRow(processed);
-            } else { appendError(t, "데이터 없음"); }
-        } catch (e) { appendError(t, "네트워크 에러"); }
-        
-        if (i < myTickers.length - 1) await new Promise(r => setTimeout(r, 13500));
-    }
-    msg.innerText = "분석 완료";
-    analysisRunning = false;
-}
-
-function processLogicV47(ticker, dailyData) {
-    const dates = Object.keys(dailyData);
-    const h = dates.map(d => dailyData[d]);
-    
-    const curP = parseFloat(h[0]['4. close']);
-    const preP = parseFloat(h[1]['4. close']);
-    const openP = parseFloat(h[0]['1. open']);
-    const vol = parseInt(h[0]['5. volume']);
-    const avgVol = h.slice(1, 21).reduce((s, x) => s + parseInt(x['5. volume']), 0) / 20;
-
-    // 세력평단가 (40일 가중치 로직 고수)
+// [모듈 1: 세력평단 계산] 최근 40일 가중치 상수화
+function calculateWhaleAvg(h) {
     let vSum = 0, pSum = 0;
     h.slice(0, 40).forEach((d, idx) => {
         const v = parseInt(d['5. volume']);
-        const w = Math.pow((40 - idx) / 40, 1.3);
+        const w = Math.pow((40 - idx) / 40, 1.5);
         vSum += (v * w);
         pSum += (parseFloat(d['4. close']) * v * w);
     });
-    const whaleAvg = pSum / vSum;
-    const gap = ((whaleAvg - curP) / curP * 100);
+    return pSum / vSum;
+}
 
-    const volPower = vol / avgVol;
-    let score = 48 + (gap * 1.3); // 기본 점수 보정
-    if(volPower > 2.2) score += 22; 
-    if(curP > preP) score += 8;
+// [모듈 2: 등급 산정] 스텔스 매집 및 거래량 소멸 가중치
+function assessGrade(curP, preP, vol, avgVol, gap, h) {
+    let score = 40; 
+    let logs = [];
 
-    const fS = Math.min(99.9, score).toFixed(1);
-    let grade = fS > 95 ? "S+" : (fS > 90 ? "S" : (fS > 85 ? "S-" : "A"));
+    // 1. 세력가 괴리 점수 (최대 35점)
+    const gapScore = Math.min(35, gap * 1.5);
+    score += gapScore;
+    logs.push(`세력가 괴리: +${gapScore.toFixed(1)}`);
 
-    let timing = "1~3일";
-    if(volPower > 2.5 || fS > 93) timing = "즉시";
-    else if(fS < 78) timing = "5일+";
+    // 2. 스텔스 매집봉 감지 (최근 15일 내 평소 3배 거래량 발생 여부)
+    const hasSpike = h.slice(1, 15).some(d => parseInt(d['5. volume']) > avgVol * 3);
+    if(hasSpike) { 
+        score += 20; 
+        logs.push(`최근 매집봉 감지: +20`);
+        // 매집봉 이후 거래량 소멸(개미털기) 확인
+        if(vol < avgVol * 0.8) { score += 10; logs.push(`거래량 소멸구간 가점: +10`); }
+    }
 
-    let type = "수급응축";
-    if(volPower > 1.8 && Math.abs(curP - openP)/openP < 0.035) type = "가격억제형수급";
-    else if(fS > 91) type = "발사임박";
-    else if(curP < preP && vol < avgVol * 0.7) type = "개미털기";
+    // 3. 당일 수급 급증
+    if(vol > avgVol * 2) { score += 15; logs.push(`당일 수급발생: +15`); }
 
-    return {
-        t: ticker, g: `${grade}(${fS})`, tm: timing, 
-        scale: `A(${(curP*1.65).toFixed(2)})`, 
-        base: curP.toFixed(2), 
-        change: `${(((curP-preP)/preP)*100).toFixed(1)}%`,
-        w: `${whaleAvg.toFixed(2)}`, 
-        gap: `${gap.toFixed(1)}%`,
-        ty: type, d: (curP*0.8).toFixed(2), rel: fS+"%"
+    const finalScore = Math.min(99.9, score);
+    return { finalScore, logs };
+}
+
+async function startAnalysis() {
+    const key = document.getElementById('apiKey').value.trim();
+    if(!key) return alert("API Key 필요");
+    const body = document.getElementById('listBody');
+    body.innerHTML = ""; analysisResults = [];
+    
+    for (let i = 0; i < myTickers.length; i++) {
+        const t = myTickers[i];
+        document.getElementById('statusMsg').innerText = `${t} 분석 중...`;
+        try {
+            const res = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${t}&apikey=${key}`);
+            const data = await res.json();
+            const timeKey = Object.keys(data).find(k => k.includes("Time Series"));
+            
+            if (timeKey) {
+                const h = Object.keys(data[timeKey]).map(d => data[timeKey][d]);
+                const curP = parseFloat(h[0]['4. close']);
+                const preP = parseFloat(h[1]['4. close']);
+                const vol = parseInt(h[0]['5. volume']);
+                const avgVol = h.slice(1, 21).reduce((s, x) => s + parseInt(x['5. volume']), 0) / 20;
+                
+                const whaleAvg = calculateWhaleAvg(h);
+                const gap = ((whaleAvg - curP) / curP * 100);
+                const { finalScore, logs } = assessGrade(curP, preP, vol, avgVol, gap, h);
+                
+                // 폭발규모: 최근 60일 최고가 기준
+                const max60 = Math.max(...h.slice(0, 60).map(x => parseFloat(x['2. high'])));
+                
+                const resObj = {
+                    t: t, 
+                    score: finalScore.toFixed(1),
+                    grade: finalScore > 94 ? "S+" : (finalScore > 88 ? "S" : "A"),
+                    timing: finalScore > 92 || vol > avgVol * 2.5 ? "즉시" : "1~3일",
+                    scale: `A(${max60.toFixed(2)}) / B(${(max60*1.3).toFixed(2)})`,
+                    base: `${curP.toFixed(2)} (${(((curP-preP)/preP)*100).toFixed(1)}%)`,
+                    whale: `${whaleAvg.toFixed(2)} (+${gap.toFixed(1)}%)`,
+                    type: gap > 15 && vol < avgVol ? "가격억제형" : (finalScore > 90 ? "발사임박" : "수급응축"),
+                    down: (curP * 0.85).toFixed(2),
+                    log: logs.join('\n')
+                };
+                analysisResults.push(resObj);
+                appendRow(resObj, analysisResults.length - 1);
+            }
+        } catch (e) { console.error(e); }
+        if (i < myTickers.length - 1) await new Promise(r => setTimeout(r, 13500));
+    }
+    document.getElementById('statusMsg').innerText = "분석 완료";
+}
+
+function appendRow(i, idx) {
+    const tr = document.createElement('tr');
+    tr.onclick = () => {
+        document.getElementById('modalTitle').innerText = `${i.t} 분석 로그`;
+        document.getElementById('modalBody').innerText = `[점수 산출 근거]\n${i.log}\n\n[판정]\n유형: ${i.type}\n예상 하방라인: ${i.down}`;
+        document.getElementById('modal').style.display = 'flex';
     };
-}
-
-function appendRow(i) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-        <td class="sticky-col">${i.t}</td>
-        <td class="up">${i.g}</td>
-        <td>${i.tm}</td>
-        <td>${i.scale}</td>
-        <td>${i.base}<span class="sub-val">${i.change}</span></td>
-        <td>${i.w}<span class="sub-val" style="color:var(--up)">+${i.gap}</span></td>
-        <td>${i.ty}</td>
-        <td style="color:var(--down)">${i.d}</td>
-        <td>${i.rel}</td>
-    `;
-    document.getElementById('listBody').appendChild(tr);
-}
-
-function appendError(t, m) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="sticky-col">${t}</td><td colspan="8" style="color:#999; font-size:0.8rem;">${m}</td>`;
+    tr.innerHTML = `<td class="sticky-col">${i.t}</td><td class="up">${i.grade}(${i.score})</td><td>${i.timing}</td><td>${i.scale}</td><td>${i.base}</td><td>${i.whale}</td><td>${i.type}</td><td style="color:var(--down)">${i.down}</td><td>${i.score}%</td>`;
     document.getElementById('listBody').appendChild(tr);
 }
 window.onload = renderChips;
