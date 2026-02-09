@@ -1,0 +1,11 @@
+{
+  "name": "SR board",
+  "short_name": "SRB",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0b0e11",
+  "theme_color": "#00ff88",
+  "icons": [
+    { "src": "https://cdn-icons-png.flaticon.com/512/2502/2502220.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
