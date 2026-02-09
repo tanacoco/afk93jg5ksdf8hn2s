@@ -2,52 +2,52 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SR Board Pro Light</title>
+    <title>SR Board Pro - Gemini Engine</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         :root { 
-            --bg: #f8f9fa; --card: #ffffff; --point: #007bff; --text: #212529; 
-            --up: #dc3545; --down: #007bff; --border: #dee2e6; --sub-text: #6c757d;
+            --bg: #fdfdfd; --card: #ffffff; --point: #0066ff; --text: #1d1d1f; 
+            --up: #e32119; --down: #007aff; --border: #e1e1e3; --sub-text: #86868b;
         }
-        html, body { overscroll-behavior-y: none; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 50px; }
-        header { text-align: center; padding: 20px; font-size: 1.4rem; font-weight: 800; color: var(--point); border-bottom: 1px solid var(--border); background: #fff; }
-        .controls { padding: 15px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); z-index: 100; }
-        .input-group { display: flex; gap: 8px; margin-bottom: 10px; }
-        .input-box { background: #fff; color: var(--text); border: 1px solid var(--border); padding: 12px; border-radius: 8px; font-size: 1rem; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
-        .input-ticker { flex-grow: 1; text-transform: uppercase; }
-        .btn-add { background: var(--text); color: #fff; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-analyze { background: var(--point); color: #fff; font-weight: bold; border: none; padding: 16px; border-radius: 8px; width: 100%; cursor: pointer; margin-top: 10px; font-size: 1rem; transition: 0.2s; }
-        .btn-analyze:active { opacity: 0.7; }
-        .status-msg { text-align: center; font-size: 0.85rem; color: var(--point); margin-top: 10px; font-weight: bold; min-height: 1.2rem; }
+        html, body { overscroll-behavior-y: none; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding-bottom: 50px; }
+        header { text-align: center; padding: 25px 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; color: var(--text); border-bottom: 1px solid var(--border); background: #fff; }
+        .controls { padding: 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(255,255,255,0.8); backdrop-filter: saturate(180%) blur(20px); z-index: 100; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 12px; }
+        .input-box { background: #f5f5f7; color: var(--text); border: 1px solid var(--border); padding: 14px; border-radius: 10px; font-size: 1rem; outline: none; transition: all 0.2s; }
+        .input-box:focus { border-color: var(--point); background: #fff; }
+        .input-ticker { flex-grow: 1; text-transform: uppercase; font-weight: 600; }
+        .btn-add { background: var(--text); color: #fff; border: none; padding: 0 22px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .btn-analyze { background: var(--point); color: #fff; font-weight: 700; border: none; padding: 18px; border-radius: 12px; width: 100%; cursor: pointer; margin-top: 10px; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(0,102,255,0.2); }
+        .status-msg { text-align: center; font-size: 0.9rem; color: var(--point); margin-top: 12px; font-weight: 600; min-height: 1.4rem; }
         
-        .table-container { overflow-x: auto; width: 100%; background: #fff; }
-        table { border-collapse: collapse; width: 100%; min-width: 1000px; font-size: 0.9rem; }
-        th { background: #f1f3f5; color: var(--sub-text); padding: 14px; border-bottom: 1px solid var(--border); font-weight: 600; }
-        td { padding: 16px 12px; text-align: center; border-bottom: 1px solid #f1f3f5; }
-        .sticky-col { position: sticky; left: 0; background: #fff; z-index: 10; font-weight: 700; color: var(--point); border-right: 2px solid #f1f3f5; }
+        .table-container { overflow-x: auto; width: 100%; border-top: 1px solid var(--border); }
+        table { border-collapse: collapse; width: 100%; min-width: 1100px; font-size: 0.95rem; }
+        th { background: #fbfbfd; color: var(--sub-text); padding: 16px; border-bottom: 1px solid var(--border); font-weight: 500; text-transform: uppercase; font-size: 0.8rem; }
+        td { padding: 18px 14px; text-align: center; border-bottom: 1px solid #f5f5f7; }
+        .sticky-col { position: sticky; left: 0; background: #fff; z-index: 10; font-weight: 700; color: var(--text); border-right: 1px solid var(--border); }
         
-        .up { color: var(--up); font-weight: bold; } .down { color: var(--down); font-weight: bold; }
-        .chip { display: inline-flex; align-items: center; background: #e9ecef; padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.85rem; border: 1px solid var(--border); color: var(--text); }
-        .chip-del { color: #adb5bd; margin-left: 8px; cursor: pointer; font-size: 1.2rem; }
+        .up { color: var(--up); } .down { color: var(--down); }
+        .chip { display: inline-flex; align-items: center; background: #f5f5f7; padding: 8px 16px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; border: 1px solid var(--border); font-weight: 500; }
+        .chip-del { color: #bcbcbc; margin-left: 10px; cursor: pointer; font-size: 1.3rem; }
 
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 300; justify-content: center; align-items: center; }
-        .modal-content { background: #fff; padding: 25px; border-radius: 15px; width: 85%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); color: var(--text); }
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 300; justify-content: center; align-items: center; transition: opacity 0.3s; }
+        .modal-content { background: #fff; padding: 30px; border-radius: 20px; width: 88%; max-width: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); color: var(--text); }
     </style>
 </head>
 <body>
 
-<header>SR BOARD PRO</header>
+<header>SR BOARD PRO (GEMINI ENGINE)</header>
 
 <div class="controls">
     <div class="input-group">
         <input type="password" id="apiKey" class="input-box" style="width: 100%;" placeholder="Alpha Vantage API Key">
     </div>
     <div class="input-group">
-        <input type="text" id="newTicker" class="input-box input-ticker" placeholder="TICKER (ex: POLA, BTTC)">
+        <input type="text" id="newTicker" class="input-box input-ticker" placeholder="TICKER">
         <button class="btn-add" onclick="addTicker()">+</button>
     </div>
-    <div id="tickerChips" style="margin-bottom: 10px; min-height: 25px;"></div>
-    <button id="mainBtn" class="btn-analyze" onclick="startAnalysis()">실시간 분석 시작</button>
+    <div id="tickerChips"></div>
+    <button id="mainBtn" class="btn-analyze" onclick="startAnalysis()">실시간 정밀 분석 실행</button>
     <div id="statusMsg" class="status-msg"></div>
 </div>
 
@@ -55,7 +55,7 @@
     <table>
         <thead>
             <tr>
-                <th class="sticky-col">티커</th><th>등급</th><th>시점</th><th>규모(목표)</th><th>전일가</th><th>현재가</th><th>세력가</th><th>유형</th><th>하방</th><th>신뢰도</th>
+                <th class="sticky-col">티커</th><th>등급 (점수)</th><th>시점</th><th>규모 (목표)</th><th>전일 종가</th><th>현재가 (%)</th><th>세력 평단 (%)</th><th>분석 유형</th><th>하방 라인</th><th>신뢰도</th>
             </tr>
         </thead>
         <tbody id="listBody"></tbody>
@@ -64,9 +64,9 @@
 
 <div id="modal" onclick="this.style.display='none'">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <div id="modalTitle" style="color:var(--point); font-weight:800; margin-bottom:15px; font-size:1.2rem; border-bottom:2px solid #f1f3f5; padding-bottom:10px;"></div>
-        <div id="modalBody" style="font-size:1rem; line-height:1.7; white-space: pre-wrap;"></div>
-        <button style="margin-top:20px; width:100%; padding:14px; background:var(--text); color:white; border:none; border-radius:8px; font-weight:bold;" onclick="document.getElementById('modal').style.display='none'">확인</button>
+        <div id="modalTitle" style="font-weight:800; margin-bottom:18px; font-size:1.3rem; border-bottom:2px solid #f5f5f7; padding-bottom:12px;"></div>
+        <div id="modalBody" style="font-size:1rem; line-height:1.8; white-space: pre-wrap; color: #444;"></div>
+        <button style="margin-top:25px; width:100%; padding:16px; background:var(--text); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="document.getElementById('modal').style.display='none'">분석 리포트 닫기</button>
     </div>
 </div>
 
@@ -100,7 +100,7 @@ function removeTicker(t) {
 async function startAnalysis() {
     const key = document.getElementById('apiKey').value.trim();
     if(!key) return alert("API 키를 입력하세요.");
-    if(!myTickers.length) return alert("티커를 추가하세요.");
+    if(!myTickers.length) return alert("분석할 종목을 추가하세요.");
     
     const body = document.getElementById('listBody');
     const msg = document.getElementById('statusMsg');
@@ -112,7 +112,7 @@ async function startAnalysis() {
     
     for (let i = 0; i < myTickers.length; i++) {
         const t = myTickers[i];
-        msg.innerText = `${t} 분석 중... (${i+1}/${myTickers.length})`;
+        msg.innerText = `${t} 정밀 분석 엔진 가동 중... (${i+1}/${myTickers.length})`;
         
         try {
             const res = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${t}&apikey=${key}`);
@@ -125,41 +125,63 @@ async function startAnalysis() {
 
             const timeKey = Object.keys(data).find(k => k.includes("Time Series"));
             if (timeKey) {
-                const processed = processData(t, data[timeKey]);
+                const processed = processGeminiLogic(t, data[timeKey]);
                 lastFullResults.push(processed);
                 appendRow(processed, lastFullResults.length - 1);
-            } else { appendError(t, "데이터 누락"); }
-        } catch (e) { appendError(t, "연결 실패"); }
+            } else { appendError(t, "데이터 분석 실패"); }
+        } catch (e) { appendError(t, "네트워크 통신 오류"); }
 
         if (i < myTickers.length - 1) await new Promise(r => setTimeout(r, 13000));
     }
-    msg.innerText = "분석 완료";
+    msg.innerText = "분석이 완료되었습니다.";
     btn.disabled = false;
 }
 
-function processData(ticker, data) {
+function processGeminiLogic(ticker, data) {
     const dates = Object.keys(data);
     const h = dates.map(d => data[d]);
     
-    // [날짜 정밀 교정] h[0]=현재(직전본장), h[1]=전날(그 전날)
     const curr = h[0], prev = h[1];
-    const c_val = parseFloat(curr['4. close']), o_val = parseFloat(curr['1. open']);
-    const pc_val = parseFloat(prev['4. close']), pv_val = parseInt(prev['5. volume']);
-    const cv_val = parseInt(curr['5. volume']);
+    const c = parseFloat(curr['4. close']), o = parseFloat(curr['1. open']), h_p = parseFloat(curr['2. high']), l_p = parseFloat(curr['3. low']);
+    const pc = parseFloat(prev['4. close']), pv = parseInt(prev['5. volume']), cv = parseInt(curr['5. volume']);
 
-    // a. 거래량 죽었는데 과락 (개미털기)
-    const isDumpWithoutVol = (cv_val < pv_val * 0.7) && (c_val < pc_val * 0.96);
+    // [제미나이 엔진 분석 변수]
+    const avgVol20 = h.slice(0, 20).reduce((a, b) => a + parseInt(b['5. volume']), 0) / 20;
+    const volRelative = cv / avgVol20; // 20일 평균 대비 거래량
+    const bodySize = Math.abs(c - o) / o; // 캔들 몸통 크기
+    const upperTail = (h_p - Math.max(c, o)) / o; // 위꼬리
     
-    // b. 거래량 터졌는데 가격 미미 (스텔스 매집봉)
-    const isStealthWhale = (cv_val > pv_val * 3.0) && (Math.abs(c_val - o_val) / o_val < 0.04);
+    let baseScore = 60.0;
+    let reasons = [];
 
-    // c. 5주(25일) 이내 매집봉 탐지 로직 (눈에 보이는 매집)
-    let visibleWhale = false;
-    h.slice(1, 25).forEach(d => {
-        if(parseInt(d['5. volume']) > pv_val * 4) visibleWhale = true;
+    // 1. 스텔스 매집봉 판별 (정밀도 강화)
+    if (volRelative > 2.5 && bodySize < 0.03) {
+        const stealthBonus = (volRelative * 10) - (bodySize * 100);
+        baseScore += stealthBonus;
+        reasons.push(`[스텔스] 평균 대비 ${volRelative.toFixed(1)}배 거래량이 터졌으나 몸통 ${ (bodySize*100).toFixed(1) }%로 가격 억제 뚜렷`);
+    }
+
+    // 2. 최근 5주 매집 흔적 에너지 계산
+    let whaleEnergy = 0;
+    h.slice(1, 25).forEach((d, idx) => {
+        const v = parseInt(d['5. volume']);
+        const d_o = parseFloat(d['1. open']), d_c = parseFloat(d['4. close']);
+        if (v > avgVol20 * 3 && Math.abs(d_o - d_c)/d_o < 0.05) {
+            whaleEnergy += (v / avgVol20);
+        }
     });
+    if (whaleEnergy > 0) {
+        baseScore += (whaleEnergy * 2);
+        reasons.push(`[매집흔적] 5주 내 누적 매집 에너지 ${whaleEnergy.toFixed(1)}점 감지`);
+    }
 
-    // 세력평단가 (100일 가중치)
+    // 3. 개미털기(과락) 로직
+    if (cv < pv * 0.8 && c < pc * 0.95) {
+        baseScore += 5.5;
+        reasons.push(`[의도적낙폭] 거래량 감소(${ (cv/pv*100).toFixed(0) }%)를 동반한 과락으로 지지선 테스트 중`);
+    }
+
+    // 세력평단가 및 괴리율
     let vSum = 0, pSum = 0;
     h.slice(0, 100).forEach(d => {
         const vol = parseInt(d['5. volume']);
@@ -167,28 +189,31 @@ function processData(ticker, data) {
         pSum += (parseFloat(d['4. close']) * vol);
     });
     const whaleAvg = pSum / vSum;
-    const gap = ((whaleAvg - c_val) / c_val * 100);
+    const whaleGap = ((whaleAvg - c) / c * 100);
     
-    let score = 60;
-    if (isStealthWhale) score += 25;
-    if (visibleWhale) score += 10;
-    if (isDumpWithoutVol) score += 5;
-    if (gap > 12) score += 10;
-    
-    const grade = score > 90 ? 'S' : (score > 80 ? 'A' : 'B');
+    if (whaleGap > 10) {
+        baseScore += (whaleGap / 2);
+        reasons.push(`[저평가] 세력 평단(${whaleAvg.toFixed(2)}) 대비 현재가 괴리율 ${whaleGap.toFixed(1)}%로 메리트 발생`);
+    }
+
+    const finalScore = Math.min(99.9, baseScore).toFixed(1);
+    let grade = 'B';
+    if (finalScore >= 90) grade = 'S';
+    else if (finalScore >= 80) grade = 'A';
+    else if (finalScore < 70) grade = 'C';
 
     return {
         t: ticker, 
-        g: `${grade} (${score}%)`,
-        tm: score > 88 ? "즉시" : "1~3일",
-        s: `A (${(c_val*1.4).toFixed(2)} / ${(c_val*2.1).toFixed(2)})`, 
-        p: pc_val.toFixed(2),
-        cur: `${c_val.toFixed(2)} (${((c_val-pc_val)/pc_val*100).toFixed(1)}%)`,
-        w: `${whaleAvg.toFixed(2)} (${gap.toFixed(1)}%)`,
-        ty: isStealthWhale ? "스텔스매집" : (isDumpWithoutVol ? "의도적낙폭" : "박스권횡보"), 
-        d: `-20% (${(pc_val*0.8).toFixed(2)})`, // 전날가 기준 하방
-        r: score + "%",
-        detail: `[세력 포착 근거]\n\n${isStealthWhale ? "▶ [포착] 스텔스 매집봉 발생! 거래량이 폭증했으나 가격 변동을 억제하며 매집 중." : ""}\n${visibleWhale ? "▶ [확인] 최근 5주 내 강력한 육안상 매집봉이 확인됩니다." : ""}\n${isDumpWithoutVol ? "▶ [주의] 낮은 거래량으로 의도적 하락 유도 중(개미털기)." : ""}\n▶ 세력 평단가(${whaleAvg.toFixed(2)}) 대비 현재가 괴리율은 ${gap.toFixed(1)}% 입니다.`
+        g: `${grade} (${finalScore}%)`,
+        tm: finalScore > 88 ? "즉시/단기" : (finalScore > 78 ? "1~3일" : "관망"),
+        s: `A (${(c*1.45).toFixed(2)} / ${(c*2.2).toFixed(2)})`, 
+        p: pc.toFixed(2),
+        cur: `${c.toFixed(2)} (${((c-pc)/pc*100).toFixed(1)}%)`,
+        w: `${whaleAvg.toFixed(2)} (${whaleGap.toFixed(1)}%)`,
+        ty: finalScore > 85 ? "핵심매집주" : (whaleEnergy > 5 ? "매집진행중" : "심리전구간"), 
+        d: `-20% (${(pc*0.8).toFixed(2)})`,
+        rel: finalScore + "%",
+        detail: `[Gemini Engine 정밀 분석 결과]\n\n${reasons.length > 0 ? reasons.join('\n') : "특이 수급 데이터 없음"}\n\n▶ 최종 판단: 본 종목은 현재 ${ticker} 세력의 의도가 ${reasons.some(r=>r.includes('스텔스')) ? '가격 억제형 매집' : '기간 조정형 매집'} 단계에 있는 것으로 분석됩니다.`
     };
 }
 
@@ -196,16 +221,16 @@ function appendRow(i, idx) {
     const tr = document.createElement('tr');
     tr.onclick = () => {
         const item = lastFullResults[idx];
-        document.getElementById('modalTitle').innerText = item.t + " 정밀 분석";
+        document.getElementById('modalTitle').innerText = item.t + " Gemini 리포트";
         document.getElementById('modalBody').innerText = item.detail;
         document.getElementById('modal').style.display = 'flex';
     };
     tr.innerHTML = `
         <td class="sticky-col">${i.t}</td>
-        <td class="${i.g.includes('S')?'up':''}">${i.g}</td>
+        <td class="${i.g.includes('S')||i.g.includes('A')?'up':''}">${i.g}</td>
         <td>${i.tm}</td><td>${i.s}</td><td>${i.p}</td>
         <td class="${i.cur.includes('-')?'down':'up'}">${i.cur}</td>
-        <td>${i.w}</td><td>${i.ty}</td><td class="down">${i.d}</td><td>${i.r}</td>
+        <td>${i.w}</td><td>${i.ty}</td><td class="down">${i.d}</td><td>${i.rel}</td>
     `;
     document.getElementById('listBody').appendChild(tr);
 }
