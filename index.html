@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SR Board Pro - V6.0</title>
+    <title>SR Board Pro - V6.1</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         :root { --bg: #f2f2f7; --point: #007aff; --up: #ff3b30; --down: #007aff; --text: #1c1c1e; --border: #d1d1d6; }
@@ -19,11 +19,12 @@
         td { padding: 18px 8px; text-align: center; border-bottom: 1px solid #f2f2f7; font-size: 0.85rem; background: #fff; }
         .sticky-col { position: sticky; left: 0; background: #fff !important; z-index: 100; font-weight: 800; border-right: 1px solid var(--border); width: 85px; }
         .up { color: var(--up); font-weight: bold; }
+        #tickerChips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-<header>SR BOARD PRO V6.0</header>
+<header>SR BOARD PRO V6.1</header>
 <div class="controls">
     <div class="control-inner">
         <input type="password" id="apiKey" class="input-box" placeholder="API Key 입력">
@@ -32,8 +33,8 @@
             <button onclick="addTicker()" style="padding:0 20px; background:#1d1d1f; color:#fff; border-radius:10px; border:none;">+</button>
         </div>
         <div id="tickerChips"></div>
-        <button class="btn-analyze" onclick="startAnalysis()">임박성 검증 분석 실행</button>
-        <div id="statusMsg" style="text-align:center; font-size:0.8rem; color:var(--point); margin-top:8px;"></div>
+        <button class="btn-analyze" onclick="startAnalysis()">데이터 무결성 분석 실행</button>
+        <div id="statusMsg" style="text-align:center; font-size:0.8rem; color:var(--point); margin-top:8px; font-weight:600;"></div>
     </div>
 </div>
 
@@ -58,26 +59,50 @@
 
 <script>
 let myTickers = JSON.parse(localStorage.getItem('my_tickers')) || [];
-let lastResults = JSON.parse(localStorage.getItem('last_analysis_results')) || [];
+let lastResults = []; // 실시간 결과 저장용
 
-function renderChips() { document.getElementById('tickerChips').innerHTML = myTickers.map(t => `<span style="display:inline-flex; align-items:center; background:#eee; padding:5px 10px; border-radius:15px; font-size:0.8rem; margin:0 5px 5px 0;">${t}<span style="margin-left:6px;cursor:pointer" onclick="removeTicker('${t}')">×</span></span>`).join(''); }
-function addTicker() { const v = document.getElementById('newTicker').value.toUpperCase().trim(); if(v && !myTickers.includes(v)) { myTickers.push(v); localStorage.setItem('my_tickers', JSON.stringify(myTickers)); renderChips(); } }
-function removeTicker(t) { myTickers = myTickers.filter(i => i !== t); localStorage.setItem('my_tickers', JSON.stringify(myTickers)); renderChips(); }
+function renderChips() {
+    document.getElementById('tickerChips').innerHTML = myTickers.map(t => 
+        `<span style="display:inline-flex; align-items:center; background:#eee; padding:5px 10px; border-radius:15px; font-size:0.8rem;">
+            ${t}<span style="margin-left:6px;cursor:pointer" onclick="removeTicker('${t}')">×</span>
+        </span>`
+    ).join('');
+}
 
-window.onload = () => { renderChips(); if(lastResults.length > 0) lastResults.forEach(res => appendRow(res)); };
+function addTicker() {
+    const v = document.getElementById('newTicker').value.toUpperCase().trim();
+    if(v && !myTickers.includes(v)) {
+        myTickers.push(v);
+        localStorage.setItem('my_tickers', JSON.stringify(myTickers));
+        renderChips();
+        document.getElementById('newTicker').value = "";
+    }
+}
+
+function removeTicker(t) {
+    myTickers = myTickers.filter(i => i !== t);
+    localStorage.setItem('my_tickers', JSON.stringify(myTickers));
+    renderChips();
+}
+
+window.onload = () => { renderChips(); };
 
 async function startAnalysis() {
     const key = document.getElementById('apiKey').value.trim();
     if(!key) return alert("API Key 필요");
+    
+    // 초기화 - 중복 방지 핵심
     const body = document.getElementById('listBody');
-    body.innerHTML = ""; lastResults = [];
+    body.innerHTML = ""; 
+    lastResults = []; 
     
     for (let i = 0; i < myTickers.length; i++) {
         const t = myTickers[i];
-        document.getElementById('statusMsg').innerText = `${t} 분석 중...`;
+        document.getElementById('statusMsg').innerText = `${t} 분석 중... (${i+1}/${myTickers.length})`;
+        
         try {
-            const res = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${t}&apikey=${key}`);
-            const data = await res.json();
+            const response = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${t}&apikey=${key}`);
+            const data = await response.json();
             const timeKey = Object.keys(data).find(k => k.includes("Time Series"));
             
             if (timeKey) {
@@ -87,7 +112,7 @@ async function startAnalysis() {
                 const vol = parseInt(h[0]['5. volume']);
                 const avgVol = h.slice(1, 21).reduce((s, x) => s + parseInt(x['5. volume']), 0) / 20;
 
-                // 세력평단 계산
+                // 1. 세력평단/괴리율
                 let vSum = 0, pSum = 0;
                 h.slice(0, 40).forEach((d, idx) => {
                     const v = parseInt(d['5. volume']);
@@ -98,30 +123,30 @@ async function startAnalysis() {
                 const whaleAvg = pSum / vSum;
                 const gap = ((whaleAvg - curP) / curP * 100);
 
-                // 동적 하방라인 로직 (변동성 비례)
-                const prices = h.slice(0, 20).map(x => parseFloat(x['4. close']));
-                const volatility = (Math.max(...prices) - Math.min(...prices)) / curP * 100;
-                const downPct = Math.min(25, Math.max(7, volatility * 1.5));
+                // 2. 동적 하방라인
+                const prices = h.slice(0, 15).map(x => parseFloat(x['4. close']));
+                const range = Math.max(...prices) - Math.min(...prices);
+                const downPct = Math.min(25, Math.max(8, (range / curP * 100) * 1.3));
                 const downPrice = preP * (1 - (downPct / 100));
 
-                // 임박성 기반 타이밍/등급 로직
+                // 3. 신뢰수준 및 타이밍
                 const spikeCount = h.slice(1, 30).filter(d => parseInt(d['5. volume']) > avgVol * 3.2).length;
                 let reliability = 65 + (spikeCount * 4) + (gap > 10 ? 8 : 0);
-                reliability = Math.min(98.8, reliability + (Math.random() * 2));
+                reliability = Math.min(99.1, reliability);
 
                 let timing = "5일+";
-                if (vol > avgVol * 1.6 && gap > 5) timing = "즉시";
-                else if (vol > avgVol * 1.2 || gap > 10) timing = "1~3일";
+                if (vol > avgVol * 1.5 && gap > 5) timing = "즉시";
+                else if (vol > avgVol * 1.1 || gap > 10) timing = "1~3일";
                 else if (spikeCount > 0) timing = "3~5일";
 
-                // 종합등급: S등급은 타이밍이 '즉시' 혹은 '1~3일'일 때만 가능
+                // 4. 종합등급 (임박성 필수)
                 let gradeStr = "A";
                 if (reliability > 88 && (timing === "즉시" || timing === "1~3일")) gradeStr = "S";
                 if (reliability > 93 && timing === "즉시") gradeStr = "S+";
                 if (reliability < 75 || timing === "5일+") gradeStr = "B";
 
                 const max60 = Math.max(...h.slice(0, 60).map(x => parseFloat(x['2. high'])));
-                const scaleGrade = (max60 / curP > 1.5) ? "S" : ((max60 / curP > 1.2) ? "A" : "B");
+                const scaleGrade = (max60 / curP > 1.5) ? "S" : ((max60 / curP > 1.25) ? "A" : "B");
 
                 const resObj = {
                     t: t,
@@ -136,10 +161,9 @@ async function startAnalysis() {
                 };
                 
                 lastResults.push(resObj);
-                localStorage.setItem('last_analysis_results', JSON.stringify(lastResults));
                 appendRow(resObj);
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error(`${t} 분석 실패:`, e); }
         if (i < myTickers.length - 1) await new Promise(r => setTimeout(r, 13500));
     }
     document.getElementById('statusMsg').innerText = "분석 완료";
@@ -147,7 +171,17 @@ async function startAnalysis() {
 
 function appendRow(i) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="sticky-col">${i.t}</td><td class="up">${i.grade}</td><td>${i.timing}</td><td>${i.scale}</td><td>${i.base}</td><td>${i.whale}</td><td>${i.type}</td><td style="color:var(--down)">${i.down}</td><td>${i.scoreRaw}%</td>`;
+    tr.innerHTML = `
+        <td class="sticky-col">${i.t}</td>
+        <td class="up">${i.grade}</td>
+        <td>${i.timing}</td>
+        <td>${i.scale}</td>
+        <td>${i.base}</td>
+        <td>${i.whale}</td>
+        <td>${i.type}</td>
+        <td style="color:var(--down)">${i.down}</td>
+        <td>${i.scoreRaw}%</td>
+    `;
     document.getElementById('listBody').appendChild(tr);
 }
 </script>
