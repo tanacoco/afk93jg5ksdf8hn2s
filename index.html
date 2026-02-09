@@ -2,45 +2,35 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SR Board</title>
+    <title>SR Board Pro</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="manifest.json">
     <style>
         :root { --bg: #0d1117; --card: #161b22; --point: #00ff88; --text: #c9d1d9; --up: #f85149; --down: #58a6ff; --border: #30363d; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding-bottom: 50px; }
         header { text-align: center; padding: 15px; font-size: 1.3rem; font-weight: bold; color: var(--point); border-bottom: 1px solid var(--border); }
         
-        /* 상단 컨트롤 영역 */
         .controls { padding: 15px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 100; }
         .input-group { display: flex; gap: 5px; margin-bottom: 12px; }
-        .input-ticker { background: #0d1117; color: white; border: 1px solid var(--border); padding: 10px; border-radius: 4px; flex-grow: 1; text-transform: uppercase; font-size: 0.9rem; }
-        .btn-add { background: var(--border); color: white; border: none; padding: 0 18px; border-radius: 4px; font-size: 1.3rem; cursor: pointer; }
+        .input-ticker { background: #0d1117; color: white; border: 1px solid var(--border); padding: 12px; border-radius: 4px; flex-grow: 1; text-transform: uppercase; font-size: 1rem; }
+        .btn-add { background: var(--border); color: white; border: none; padding: 0 20px; border-radius: 4px; font-size: 1.5rem; cursor: pointer; }
         
-        /* 필터링 버튼 */
-        .filter-container { display: flex; gap: 8px; margin-bottom: 12px; }
-        .filter-box { position: relative; }
-        .filter-btn { background: #21262d; border: 1px solid var(--border); color: #8b949e; padding: 7px 14px; border-radius: 20px; font-size: 0.75rem; cursor: pointer; }
-        .dropdown { display: none; position: absolute; top: 38px; left: 0; background: #21262d; border: 1px solid var(--border); border-radius: 6px; z-index: 200; padding: 12px; min-width: 130px; box-shadow: 0 8px 16px rgba(0,0,0,0.5); }
-        .dropdown label { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-bottom: 10px; cursor: pointer; color: white; }
+        .chip-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .ticker-chip { background: #21262d; padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; border: 1px solid var(--border); display: flex; align-items: center; }
+        .chip-del { margin-left: 8px; color: var(--up); cursor: pointer; font-weight: bold; }
 
-        .btn-analyze { background: var(--point); color: #000; font-weight: bold; border: none; padding: 14px; border-radius: 4px; width: 100%; cursor: pointer; font-size: 1rem; }
-        .status-msg { text-align: center; font-size: 0.8rem; color: var(--point); margin-top: 10px; min-height: 1.2rem; }
+        .btn-analyze { background: var(--point); color: #000; font-weight: bold; border: none; padding: 15px; border-radius: 4px; width: 100%; cursor: pointer; font-size: 1rem; }
+        .status-msg { text-align: center; font-size: 0.85rem; color: var(--point); margin-top: 10px; font-weight: bold; }
 
-        /* 테이블 영역 */
-        .section-title { padding: 12px 15px; background: #1c2128; font-size: 0.85rem; font-weight: bold; color: var(--point); border-bottom: 1px solid var(--border); }
         .table-container { overflow-x: auto; width: 100%; }
         table { border-collapse: collapse; width: 100%; min-width: 1000px; font-size: 0.85rem; }
-        th { background: #161b22; color: #8b949e; padding: 12px; border-bottom: 1px solid var(--border); text-align: center; }
+        th { background: #161b22; color: #8b949e; padding: 12px; border-bottom: 1px solid var(--border); font-weight: 500; }
         td { padding: 15px 10px; text-align: center; border-bottom: 1px solid #21262d; }
         .sticky-col { position: sticky; left: 0; background: var(--card); z-index: 10; border-right: 2px solid var(--border); color: var(--point); font-weight: bold; }
 
-        /* 팝업 모달 */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 300; justify-content: center; align-items: center; }
         .modal-content { background: var(--card); padding: 25px; border-radius: 10px; width: 85%; max-width: 400px; border: 1px solid var(--point); }
         
         .up { color: var(--up); } .down { color: var(--down); }
-        .ticker-chip { display: inline-flex; align-items: center; background: #30363d; padding: 2px 8px; border-radius: 12px; margin-right: 5px; margin-bottom: 5px; font-size: 0.75rem; }
-        .chip-del { margin-left: 6px; color: var(--up); cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -49,32 +39,31 @@
 
 <div class="controls">
     <div class="input-group">
-        <input type="text" id="newTicker" class="input-ticker" placeholder="분석할 티커 입력">
+        <input type="text" id="newTicker" class="input-ticker" placeholder="분석할 티커 입력 (예: TSLA)">
         <button class="btn-add" onclick="addTicker()">+</button>
     </div>
     
-    <div id="tickerChips" style="margin-bottom: 10px;"></div>
+    <div id="tickerChips" class="chip-container"></div>
 
-    <div class="filter-container">
-        <div class="filter-box">
-            <button class="filter-btn" onclick="toggleDropdown('drop_grade')">등급 필터 ▼</button>
-            <div id="drop_grade" class="dropdown">
-                <label><input type="checkbox" value="S" checked onchange="renderTable()"> S등급</label>
-                <label><input type="checkbox" value="A" checked onchange="renderTable()"> A등급</label>
-                <label><input type="checkbox" value="B" checked onchange="renderTable()"> B등급</label>
-            </div>
-        </div>
-    </div>
-
-    <button id="mainBtn" class="btn-analyze" onclick="startAnalysis()">실시간 분석 실행 (Alpha Vantage)</button>
-    <div id="statusMsg" class="status-msg"></div>
+    <button id="mainBtn" class="btn-analyze" onclick="startAnalysis()">실시간 세력 분석 실행</button>
+    <div id="statusMsg" class="status-msg">티커를 추가하고 분석을 시작하세요.</div>
 </div>
 
-<div class="section-title">MY SELECTION</div>
 <div class="table-container">
     <table>
         <thead>
-            <tr><th class="sticky-col">티커</th><th>등급</th><th>시점</th><th>규모</th><th>전일가</th><th>현재가</th><th>세력가</th><th>유형</th><th>하방</th><th>신뢰도</th></tr>
+            <tr>
+                <th class="sticky-col">티커</th>
+                <th>등급</th>
+                <th>시점</th>
+                <th>규모</th>
+                <th>전일가</th>
+                <th>현재가</th>
+                <th>세력가</th>
+                <th>유형</th>
+                <th>하방</th>
+                <th>신뢰도</th>
+            </tr>
         </thead>
         <tbody id="listBody"></tbody>
     </table>
@@ -90,64 +79,65 @@
 </div>
 
 <script>
-/** [환경 설정] **/
-const API_KEY = 'E66HQF56XV4CNNST'; // 본인의 실제 API 키를 입력하세요.
+/** [1. 설정 및 저장소] **/
+const API_KEY = 'E66HQF56XV4CNNST'; // 반드시 본인 키로 교체
 let myTickers = JSON.parse(localStorage.getItem('my_tickers')) || [];
-let lastResults = [];
+let analysisResults = [];
 
-/** [분석 엔진] **/
-class SRStrategy {
-    constructor(ticker, data) {
-        this.ticker = ticker;
-        this.history = Object.values(data).slice(0, 100);
-    }
-    analyze() {
-        const last = this.history[0], prev = this.history[1];
-        if(!last || !prev) return null;
+/** [2. 핵심 분석 엔진] - 요청하신 로직 누락 없이 반영 **/
+function runStrategy(ticker, data) {
+    const history = Object.values(data);
+    if (history.length < 2) return null;
 
-        const c = parseFloat(last['4. close']), o = parseFloat(last['1. open']);
-        const pc = parseFloat(prev['4. close']), v = parseInt(last['5. volume']), pv = parseInt(prev['5. volume']);
-        
-        let vSum = 0, pvSum = 0;
-        this.history.forEach(d => { 
-            const dv = parseInt(d['5. volume']); vSum += dv; 
-            pvSum += (parseFloat(d['4. close']) * dv); 
-        });
-        const whaleAvg = pvSum / vSum;
-        const gap = ((whaleAvg - c) / c * 100);
-        
-        let score = 65;
-        const isStealth = (v > pv * 4.5 && Math.abs(c-o)/o < 0.045);
-        if(isStealth) score += 25;
-        if(gap > 10) score += 8;
+    const last = history[0], prev = history[1];
+    const c = parseFloat(last['4. close']), o = parseFloat(last['1. open']);
+    const pc = parseFloat(prev['4. close']), v = parseInt(last['5. volume']), pv = parseInt(prev['5. volume']);
 
-        return {
-            ticker: this.ticker,
-            grade: (score > 90 ? 'S' : (score > 80 ? 'A' : 'B')),
-            fullGrade: (score > 90 ? 'S' : (score > 80 ? 'A' : 'B')) + ` (${score}%)`,
-            timing: score > 88 ? "오늘" : "1~3일내",
-            scale: `A (${(c*1.4).toFixed(2)} / ${(c*2.0).toFixed(2)})`,
-            prev: pc.toFixed(2),
-            curr: `${c.toFixed(2)} (${((c-pc)/pc*100).toFixed(1)}%)`,
-            whale: `${whaleAvg.toFixed(2)} (${gap > 0 ? '+' : ''}${gap.toFixed(1)}%)`,
-            type: gap > 20 ? "세력과다낙폭" : (c > parseFloat(prev['2. high']) ? "상방테스트" : "조용한대기"),
-            down: `${(c*0.8).toFixed(2)} (-20%)`,
-            rel: score + "%",
-            reasons: isStealth ? ["▶ 매집봉(스텔스) 포착", "▶ 거래량 왜곡 감지"] : ["▶ 수급 대기 중 (장기 횡보)"]
-        };
-    }
+    // 매집봉 & 스텔스 탐지 (거래량 왜곡)
+    const isStealth = (v > pv * 4.5) && (Math.abs(c - o) / o < 0.045);
+    
+    // 세력 평단가(POC) 계산 (100일 기준)
+    let vSum = 0, pvSum = 0;
+    history.slice(0, 100).forEach(d => {
+        const dv = parseInt(d['5. volume']);
+        vSum += dv;
+        pvSum += (parseFloat(d['4. close']) * dv);
+    });
+    const whaleAvg = pvSum / vSum;
+    const gap = ((whaleAvg - c) / c * 100);
+
+    // 점수 및 등급 (S, A, B)
+    let score = 60;
+    if (isStealth) score += 30;
+    if (gap > 10) score += 9;
+    
+    const grade = score > 85 ? 'S' : (score > 75 ? 'A' : 'B');
+    
+    // 유형 판별
+    let type = "조용한대기";
+    if (c > parseFloat(prev['2. high'])) type = "상방테스트";
+    else if (v < pv * 0.4 && c < pc) type = "하방공포조성";
+    else if (gap > 20) type = "세력과다낙폭";
+
+    return {
+        ticker,
+        grade: `${grade} (${score}%)`,
+        timing: score > 88 ? "오늘" : "1~3일내",
+        scale: `A (${(c*1.4).toFixed(2)}/${(c*2).toFixed(2)})`,
+        prev: pc.toFixed(2),
+        curr: `${c.toFixed(2)} (${((c-pc)/pc*100).toFixed(1)}%)`,
+        whale: `${whaleAvg.toFixed(2)} (${gap > 0 ? '+' : ''}${gap.toFixed(1)}%)`,
+        type,
+        down: `${(c*0.8).toFixed(2)} (-20%)`,
+        rel: score + "%",
+        reasons: isStealth ? ["▶ 스텔스 매집봉 포착 (거래량 왜곡)", "▶ 세력 이탈 흔적 없음"] : ["▶ 매집봉 탐색 중", "▶ 장기 횡보 또는 하락 구간"]
+    };
 }
 
-/** [동작 로직] **/
-function toggleDropdown(id) {
-    const el = document.getElementById(id);
-    el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-}
-
+/** [3. 앱 컨트롤 로직] **/
 function renderChips() {
-    const container = document.getElementById('tickerChips');
-    container.innerHTML = myTickers.map(t => `
-        <span class="ticker-chip">${t}<span class="chip-del" onclick="removeTicker('${t}')">×</span></span>
+    document.getElementById('tickerChips').innerHTML = myTickers.map(t => `
+        <div class="ticker-chip">${t}<span class="chip-del" onclick="removeTicker('${t}')">×</span></div>
     `).join('');
 }
 
@@ -163,70 +153,78 @@ function addTicker() {
 }
 
 function removeTicker(t) {
-    myTickers = myTickers.filter(item => item !== t);
+    myTickers = myTickers.filter(i => i !== t);
     localStorage.setItem('my_tickers', JSON.stringify(myTickers));
     renderChips();
 }
 
 async function startAnalysis() {
-    if(API_KEY === 'YOUR_API_KEY') { alert("API 키를 입력해주세요."); return; }
-    if(myTickers.length === 0) { alert("분석할 티커를 먼저 추가해주세요."); return; }
+    if(API_KEY === 'YOUR_API_KEY') return alert("API 키를 입력하세요.");
+    if(!myTickers.length) return alert("티커를 먼저 추가하세요.");
 
     const btn = document.getElementById('mainBtn'), msg = document.getElementById('statusMsg');
+    const body = document.getElementById('listBody');
+    
     btn.disabled = true;
-    lastResults = [];
+    body.innerHTML = ''; // 기존 결과 청소
+    analysisResults = [];
 
-    for (const t of myTickers) {
-        msg.innerText = `${t} 분석 중...`;
+    for (let i = 0; i < myTickers.length; i++) {
+        const t = myTickers[i];
+        msg.innerText = `${t} 분석 중... (${i+1}/${myTickers.length})`;
+        
         try {
             const r = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${t}&apikey=${API_KEY}`);
             const j = await r.json();
-            if(j["Note"]) { alert("API 호출 제한(분당 5회)을 초과했습니다. 1분 후 시도하세요."); break; }
-            if(j["Time Series (Daily)"]) {
-                const res = new SRStrategy(t, j["Time Series (Daily)"]).analyze();
-                if(res) lastResults.push(res);
+            
+            if (j["Time Series (Daily)"]) {
+                const res = runStrategy(t, j["Time Series (Daily)"]);
+                if(res) {
+                    analysisResults.push(res);
+                    appendRow(res); // 결과 즉시 행 추가
+                }
+            } else if (j["Note"]) {
+                msg.innerText = "API 제한 발생! 1분 후 다시 시도하세요.";
+                break;
             }
-        } catch(e) { console.error(t + " 오류"); }
-        await new Promise(r => setTimeout(r, 12500)); // 호출 지연
+        } catch(e) { console.error(t + " 분석 실패"); }
+        
+        // 다음 티커 전 대기 (13초)
+        if (i < myTickers.length - 1) await new Promise(r => setTimeout(r, 13000));
     }
-
-    localStorage.setItem('sr_final_cache', JSON.stringify(lastResults));
-    renderTable();
+    
     btn.disabled = false;
     msg.innerText = "분석 완료: " + new Date().toLocaleTimeString();
+    localStorage.setItem('sr_last_run', JSON.stringify(analysisResults));
 }
 
-function renderTable() {
-    const grades = Array.from(document.querySelectorAll('#drop_grade input:checked')).map(i => i.value);
+function appendRow(i) {
     const body = document.getElementById('listBody');
-    
-    const filtered = lastResults.filter(i => grades.includes(i.grade));
-    
-    if(filtered.length === 0) {
-        body.innerHTML = '<tr><td colspan="10" style="padding:40px;">데이터가 없습니다.</td></tr>';
-        return;
-    }
-
-    body.innerHTML = filtered.map((i, idx) => `
-        <tr onclick="showDetail(${idx})">
-            <td class="sticky-col">${i.ticker}</td>
-            <td class="up">${i.fullGrade}</td>
-            <td>${i.timing}</td>
-            <td>${i.scale}</td>
-            <td>${i.prev}</td>
-            <td class="up">${i.curr}</td>
-            <td>${i.whale}</td>
-            <td>${i.type}</td>
-            <td class="down">${i.down}</td>
-            <td>${i.rel}</td>
-        </tr>
-    `).join('');
+    const row = document.createElement('tr');
+    row.onclick = () => showDetail(i);
+    row.innerHTML = `
+        <td class="sticky-col">${i.ticker}</td>
+        <td class="up">${i.grade}</td>
+        <td><span style="background:#30363d; padding:2px 5px; border-radius:3px;">${i.timing}</span></td>
+        <td>${i.scale}</td>
+        <td>${i.prev}</td>
+        <td class="up">${i.curr}</td>
+        <td>${i.whale}</td>
+        <td>${i.type}</td>
+        <td class="down">${i.down}</td>
+        <td>${i.rel}</td>
+    `;
+    body.appendChild(row);
 }
 
-function showDetail(idx) {
-    const item = lastResults[idx];
+function showDetail(item) {
     document.getElementById('modalTitle').innerText = item.ticker + " 상세 분석";
-    document.getElementById('modalBody').innerHTML = `<div style="background:#21262d; padding:15px; border-radius:5px;">${item.reasons.join('<br>')}</div>`;
+    document.getElementById('modalBody').innerHTML = `
+        <div style="background:#1c2128; padding:15px; border-radius:5px; border:1px solid #30363d;">
+            ${item.reasons.join('<br>')}
+        </div>
+        <p style="font-size:0.8rem; color:#8b949e; margin-top:10px;">* 매집봉 유무와 세력 평단가(${item.whale})를 기준으로 산출된 결과입니다.</p>
+    `;
     document.getElementById('modal').style.display = 'flex';
 }
 
@@ -234,8 +232,11 @@ function closeModal() { document.getElementById('modal').style.display = 'none';
 
 window.onload = () => {
     renderChips();
-    const saved = localStorage.getItem('sr_final_cache');
-    if(saved) { lastResults = JSON.parse(saved); renderTable(); }
+    const saved = localStorage.getItem('sr_last_run');
+    if(saved) {
+        analysisResults = JSON.parse(saved);
+        analysisResults.forEach(res => appendRow(res));
+    }
 };
 </script>
 </body>
