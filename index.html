@@ -2,49 +2,44 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SR Board Pro - Gemini Engine</title>
+    <title>SR Board Pro - Gemini V4.2</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         :root { 
             --bg: #fdfdfd; --card: #ffffff; --point: #0066ff; --text: #1d1d1f; 
             --up: #e32119; --down: #007aff; --border: #e1e1e3; --sub-text: #86868b;
         }
-        html, body { overscroll-behavior-y: none; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding-bottom: 50px; }
-        header { text-align: center; padding: 25px 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; color: var(--text); border-bottom: 1px solid var(--border); background: #fff; }
-        .controls { padding: 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(255,255,255,0.8); backdrop-filter: saturate(180%) blur(20px); z-index: 100; }
+        html, body { overscroll-behavior-y: none; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 50px; }
+        header { text-align: center; padding: 25px 0; font-size: 1.5rem; font-weight: 700; color: var(--text); border-bottom: 1px solid var(--border); background: #fff; }
+        .controls { padding: 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); z-index: 100; }
         .input-group { display: flex; gap: 10px; margin-bottom: 12px; }
-        .input-box { background: #f5f5f7; color: var(--text); border: 1px solid var(--border); padding: 14px; border-radius: 10px; font-size: 1rem; outline: none; transition: all 0.2s; }
-        .input-box:focus { border-color: var(--point); background: #fff; }
-        .input-ticker { flex-grow: 1; text-transform: uppercase; font-weight: 600; }
-        .btn-add { background: var(--text); color: #fff; border: none; padding: 0 22px; border-radius: 10px; cursor: pointer; font-weight: 600; }
-        .btn-analyze { background: var(--point); color: #fff; font-weight: 700; border: none; padding: 18px; border-radius: 12px; width: 100%; cursor: pointer; margin-top: 10px; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(0,102,255,0.2); }
+        .input-box { background: #f5f5f7; color: var(--text); border: 1px solid var(--border); padding: 14px; border-radius: 12px; font-size: 1rem; flex-grow: 1; text-transform: uppercase; font-weight: 600; outline: none; }
+        .btn-add { background: var(--text); color: #fff; border: none; padding: 0 25px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+        .btn-analyze { background: var(--point); color: #fff; font-weight: 700; border: none; padding: 18px; border-radius: 12px; width: 100%; cursor: pointer; margin-top: 10px; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(0,102,255,0.1); }
         .status-msg { text-align: center; font-size: 0.9rem; color: var(--point); margin-top: 12px; font-weight: 600; min-height: 1.4rem; }
-        
-        .table-container { overflow-x: auto; width: 100%; border-top: 1px solid var(--border); }
+        .table-container { overflow-x: auto; width: 100%; }
         table { border-collapse: collapse; width: 100%; min-width: 1100px; font-size: 0.95rem; }
-        th { background: #fbfbfd; color: var(--sub-text); padding: 16px; border-bottom: 1px solid var(--border); font-weight: 500; text-transform: uppercase; font-size: 0.8rem; }
-        td { padding: 18px 14px; text-align: center; border-bottom: 1px solid #f5f5f7; }
-        .sticky-col { position: sticky; left: 0; background: #fff; z-index: 10; font-weight: 700; color: var(--text); border-right: 1px solid var(--border); }
-        
+        th { background: #fbfbfd; color: var(--sub-text); padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.8rem; font-weight: 500; }
+        td { padding: 20px 14px; text-align: center; border-bottom: 1px solid #f5f5f7; }
+        .sticky-col { position: sticky; left: 0; background: #fff; z-index: 10; font-weight: 700; border-right: 1px solid var(--border); }
         .up { color: var(--up); } .down { color: var(--down); }
         .chip { display: inline-flex; align-items: center; background: #f5f5f7; padding: 8px 16px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; border: 1px solid var(--border); font-weight: 500; }
-        .chip-del { color: #bcbcbc; margin-left: 10px; cursor: pointer; font-size: 1.3rem; }
-
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 300; justify-content: center; align-items: center; transition: opacity 0.3s; }
-        .modal-content { background: #fff; padding: 30px; border-radius: 20px; width: 88%; max-width: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); color: var(--text); }
+        .chip-del { color: #bcbcbc; margin-left: 10px; cursor: pointer; font-size: 1.2rem; }
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 300; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; padding: 30px; border-radius: 24px; width: 88%; max-width: 450px; color: var(--text); box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body>
 
-<header>SR BOARD PRO (GEMINI ENGINE)</header>
+<header>SR BOARD PRO (GEMINI V4.2)</header>
 
 <div class="controls">
     <div class="input-group">
-        <input type="password" id="apiKey" class="input-box" style="width: 100%;" placeholder="Alpha Vantage API Key">
+        <input type="password" id="apiKey" class="input-box" placeholder="Alpha Vantage API Key">
     </div>
     <div class="input-group">
-        <input type="text" id="newTicker" class="input-box input-ticker" placeholder="TICKER">
-        <button class="btn-add" onclick="addTicker()">+</button>
+        <input type="text" id="newTicker" class="input-box" placeholder="TICKER 입력">
+        <button class="btn-add" onclick="addTicker()">추가</button>
     </div>
     <div id="tickerChips"></div>
     <button id="mainBtn" class="btn-analyze" onclick="startAnalysis()">실시간 정밀 분석 실행</button>
@@ -54,9 +49,7 @@
 <div class="table-container">
     <table>
         <thead>
-            <tr>
-                <th class="sticky-col">티커</th><th>등급 (점수)</th><th>시점</th><th>규모 (목표)</th><th>전일 종가</th><th>현재가 (%)</th><th>세력 평단 (%)</th><th>분석 유형</th><th>하방 라인</th><th>신뢰도</th>
-            </tr>
+            <tr><th class="sticky-col">티커</th><th>등급(Score)</th><th>시점</th><th>규모(A/B)</th><th>전일 종가</th><th>현재가(%)</th><th>세력평단(%)</th><th>유형분류</th><th>하방라인</th><th>신뢰도</th></tr>
         </thead>
         <tbody id="listBody"></tbody>
     </table>
@@ -64,9 +57,9 @@
 
 <div id="modal" onclick="this.style.display='none'">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <div id="modalTitle" style="font-weight:800; margin-bottom:18px; font-size:1.3rem; border-bottom:2px solid #f5f5f7; padding-bottom:12px;"></div>
-        <div id="modalBody" style="font-size:1rem; line-height:1.8; white-space: pre-wrap; color: #444;"></div>
-        <button style="margin-top:25px; width:100%; padding:16px; background:var(--text); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="document.getElementById('modal').style.display='none'">분석 리포트 닫기</button>
+        <div id="modalTitle" style="font-weight:800; margin-bottom:18px; font-size:1.3rem; border-bottom:1px solid #eee; padding-bottom:12px;"></div>
+        <div id="modalBody" style="font-size:1rem; line-height:1.8; white-space: pre-wrap; color:#333;"></div>
+        <button style="margin-top:25px; width:100%; padding:16px; background:var(--text); color:#fff; border:none; border-radius:14px; font-weight:bold; cursor:pointer;" onclick="document.getElementById('modal').style.display='none'">분석 리포트 닫기</button>
     </div>
 </div>
 
@@ -86,8 +79,7 @@ function addTicker() {
     if(v && !myTickers.includes(v)) {
         myTickers.push(v);
         localStorage.setItem('my_tickers', JSON.stringify(myTickers));
-        input.value = '';
-        renderChips();
+        input.value = ''; renderChips();
     }
 }
 
@@ -100,120 +92,105 @@ function removeTicker(t) {
 async function startAnalysis() {
     const key = document.getElementById('apiKey').value.trim();
     if(!key) return alert("API 키를 입력하세요.");
-    if(!myTickers.length) return alert("분석할 종목을 추가하세요.");
-    
     const body = document.getElementById('listBody');
     const msg = document.getElementById('statusMsg');
-    const btn = document.getElementById('mainBtn');
-    
-    btn.disabled = true;
-    body.innerHTML = "";
-    lastFullResults = [];
+    body.innerHTML = ""; lastFullResults = [];
     
     for (let i = 0; i < myTickers.length; i++) {
         const t = myTickers[i];
         msg.innerText = `${t} 정밀 분석 엔진 가동 중... (${i+1}/${myTickers.length})`;
-        
         try {
             const res = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${t}&apikey=${key}`);
             const data = await res.json();
-
-            if (data["Note"]) {
-                appendError(t, "API 제한 (1분 후 다시)");
-                break;
-            }
-
             const timeKey = Object.keys(data).find(k => k.includes("Time Series"));
             if (timeKey) {
-                const processed = processGeminiLogic(t, data[timeKey]);
+                const processed = processGeminiV42(t, data[timeKey]);
                 lastFullResults.push(processed);
                 appendRow(processed, lastFullResults.length - 1);
-            } else { appendError(t, "데이터 분석 실패"); }
-        } catch (e) { appendError(t, "네트워크 통신 오류"); }
-
+            } else { appendError(t, "데이터 없음"); }
+        } catch (e) { appendError(t, "오류"); }
         if (i < myTickers.length - 1) await new Promise(r => setTimeout(r, 13000));
     }
-    msg.innerText = "분석이 완료되었습니다.";
-    btn.disabled = false;
+    msg.innerText = "모든 분석이 완료되었습니다.";
 }
 
-function processGeminiLogic(ticker, data) {
+function processGeminiV42(ticker, data) {
     const dates = Object.keys(data);
     const h = dates.map(d => data[d]);
     
-    const curr = h[0], prev = h[1];
-    const c = parseFloat(curr['4. close']), o = parseFloat(curr['1. open']), h_p = parseFloat(curr['2. high']), l_p = parseFloat(curr['3. low']);
-    const pc = parseFloat(prev['4. close']), pv = parseInt(prev['5. volume']), cv = parseInt(curr['5. volume']);
-
-    // [제미나이 엔진 분석 변수]
-    const avgVol20 = h.slice(0, 20).reduce((a, b) => a + parseInt(b['5. volume']), 0) / 20;
-    const volRelative = cv / avgVol20; // 20일 평균 대비 거래량
-    const bodySize = Math.abs(c - o) / o; // 캔들 몸통 크기
-    const upperTail = (h_p - Math.max(c, o)) / o; // 위꼬리
+    // [Adaptive 날짜 인덱싱]
+    // h[0]는 조회 시점의 가장 최신 '마감된 데이터'입니다.
+    // 장 중에는 API 실시간가가 우선되나, 현재 PWA 구조상 h[0]를 '기준 전일가'로 사용합니다.
+    const baseClose = parseFloat(h[0]['4. close']);
+    const baseVol = parseInt(h[0]['5. volume']);
+    const baseOpen = parseFloat(h[0]['1. open']);
     
-    let baseScore = 60.0;
-    let reasons = [];
+    // 현재가는 실시간 변동을 반영할 수 있도록 추후 확장 가능하게 변수화
+    const currentPrice = baseClose; 
+    const currentVol = baseVol;
 
-    // 1. 스텔스 매집봉 판별 (정밀도 강화)
-    if (volRelative > 2.5 && bodySize < 0.03) {
-        const stealthBonus = (volRelative * 10) - (bodySize * 100);
-        baseScore += stealthBonus;
-        reasons.push(`[스텔스] 평균 대비 ${volRelative.toFixed(1)}배 거래량이 터졌으나 몸통 ${ (bodySize*100).toFixed(1) }%로 가격 억제 뚜렷`);
+    // 제미나이식 정밀 Scoring
+    const avgVol20 = h.slice(0, 20).reduce((s, x) => s + parseInt(x['5. volume']), 0) / 20;
+    const volPower = currentVol / avgVol20;
+    const bodySize = Math.abs(currentPrice - baseOpen) / baseOpen;
+    
+    let score = 50.0;
+    let tags = [];
+
+    // 1. 가격 억제형 수급 (최우선 가점)
+    if (volPower > 2.3 && bodySize < 0.035) {
+        score += 42;
+        tags.push("가격억제형 수급포착");
     }
 
-    // 2. 최근 5주 매집 흔적 에너지 계산
-    let whaleEnergy = 0;
-    h.slice(1, 25).forEach((d, idx) => {
-        const v = parseInt(d['5. volume']);
-        const d_o = parseFloat(d['1. open']), d_c = parseFloat(d['4. close']);
-        if (v > avgVol20 * 3 && Math.abs(d_o - d_c)/d_o < 0.05) {
-            whaleEnergy += (v / avgVol20);
-        }
+    // 2. 5주내 누적 매집 에너지 조사
+    let energyCount = 0;
+    h.slice(1, 25).forEach(d => {
+        if(parseInt(d['5. volume']) > avgVol20 * 3.2) energyCount += 1.8;
     });
-    if (whaleEnergy > 0) {
-        baseScore += (whaleEnergy * 2);
-        reasons.push(`[매집흔적] 5주 내 누적 매집 에너지 ${whaleEnergy.toFixed(1)}점 감지`);
+    score += (energyCount * 4.2);
+    if(energyCount > 0) tags.push(`매집봉(${energyCount.toFixed(0)}회)`);
+
+    // 3. 개미털기 감지 (직전 거래일 대비 거래량 없는 하락)
+    const prevHClose = parseFloat(h[1]['4. close']);
+    const prevHVol = parseInt(h[1]['5. volume']);
+    if(currentVol < prevHVol * 0.7 && currentPrice < prevHClose * 0.96) {
+        score += 15;
+        tags.push("개미털기구간");
     }
 
-    // 3. 개미털기(과락) 로직
-    if (cv < pv * 0.8 && c < pc * 0.95) {
-        baseScore += 5.5;
-        reasons.push(`[의도적낙폭] 거래량 감소(${ (cv/pv*100).toFixed(0) }%)를 동반한 과락으로 지지선 테스트 중`);
-    }
-
-    // 세력평단가 및 괴리율
+    // 세력평단가 계산 (기준: baseClose와 비교)
     let vSum = 0, pSum = 0;
     h.slice(0, 100).forEach(d => {
-        const vol = parseInt(d['5. volume']);
-        vSum += vol;
-        pSum += (parseFloat(d['4. close']) * vol);
+        const v = parseInt(d['5. volume']);
+        vSum += v; pSum += (parseFloat(d['4. close']) * v);
     });
     const whaleAvg = pSum / vSum;
-    const whaleGap = ((whaleAvg - c) / c * 100);
-    
-    if (whaleGap > 10) {
-        baseScore += (whaleGap / 2);
-        reasons.push(`[저평가] 세력 평단(${whaleAvg.toFixed(2)}) 대비 현재가 괴리율 ${whaleGap.toFixed(1)}%로 메리트 발생`);
-    }
+    const gap = ((whaleAvg - currentPrice) / currentPrice * 100);
+    score += (gap / 2.0);
 
-    const finalScore = Math.min(99.9, baseScore).toFixed(1);
-    let grade = 'B';
-    if (finalScore >= 90) grade = 'S';
-    else if (finalScore >= 80) grade = 'A';
-    else if (finalScore < 70) grade = 'C';
+    // 등급 세분화
+    const fS = Math.min(99.9, score).toFixed(1);
+    let grade = 'C';
+    if(fS >= 96) grade = 'S+'; else if(fS >= 92) grade = 'S'; else if(fS >= 88) grade = 'S-';
+    else if(fS >= 84) grade = 'A+'; else if(fS >= 80) grade = 'A'; else if(fS >= 76) grade = 'A-';
+    else if(fS >= 70) grade = 'B';
+
+    // 유형 자동 분류
+    let type = "박스권횡보";
+    if(tags.includes("가격억제형 수급포착")) type = "가격억제형수급";
+    else if(fS > 92) type = "발사임박";
+    else if(energyCount > 3) type = "수급응축";
+    else if(tags.includes("개미털기구간")) type = "개미털기";
 
     return {
-        t: ticker, 
-        g: `${grade} (${finalScore}%)`,
-        tm: finalScore > 88 ? "즉시/단기" : (finalScore > 78 ? "1~3일" : "관망"),
-        s: `A (${(c*1.45).toFixed(2)} / ${(c*2.2).toFixed(2)})`, 
-        p: pc.toFixed(2),
-        cur: `${c.toFixed(2)} (${((c-pc)/pc*100).toFixed(1)}%)`,
-        w: `${whaleAvg.toFixed(2)} (${whaleGap.toFixed(1)}%)`,
-        ty: finalScore > 85 ? "핵심매집주" : (whaleEnergy > 5 ? "매집진행중" : "심리전구간"), 
-        d: `-20% (${(pc*0.8).toFixed(2)})`,
-        rel: finalScore + "%",
-        detail: `[Gemini Engine 정밀 분석 결과]\n\n${reasons.length > 0 ? reasons.join('\n') : "특이 수급 데이터 없음"}\n\n▶ 최종 판단: 본 종목은 현재 ${ticker} 세력의 의도가 ${reasons.some(r=>r.includes('스텔스')) ? '가격 억제형 매집' : '기간 조정형 매집'} 단계에 있는 것으로 분석됩니다.`
+        t: ticker, g: `${grade} (${fS})`, tm: fS > 90 ? "즉시" : "1~3일",
+        s: `A (${(currentPrice*1.42).toFixed(2)} / ${(currentPrice*2.25).toFixed(2)})`,
+        p: baseClose.toFixed(2), 
+        cur: `${currentPrice.toFixed(2)} (0.0%)`,
+        w: `${whaleAvg.toFixed(2)} (${gap.toFixed(1)}%)`,
+        ty: type, d: `-20% (${(baseClose*0.8).toFixed(2)})`, rel: fS + "%",
+        detail: `[Gemini V4.2 정밀 분석]\n\n▶ 판정 유형: ${type}\n▶ 감지된 신호: ${tags.join(', ') || '특이사항 없음'}\n▶ 세력 평단가: ${whaleAvg.toFixed(2)}\n▶ 괴리율: ${gap.toFixed(1)}%\n\n본 데이터는 분석 시점 기준 가장 최신 마감 데이터(h[0])를 기준으로 세력의 의도를 파악한 결과입니다.`
     };
 }
 
@@ -221,15 +198,14 @@ function appendRow(i, idx) {
     const tr = document.createElement('tr');
     tr.onclick = () => {
         const item = lastFullResults[idx];
-        document.getElementById('modalTitle').innerText = item.t + " Gemini 리포트";
+        document.getElementById('modalTitle').innerText = item.t + " 정밀 리포트";
         document.getElementById('modalBody').innerText = item.detail;
         document.getElementById('modal').style.display = 'flex';
     };
     tr.innerHTML = `
-        <td class="sticky-col">${i.t}</td>
-        <td class="${i.g.includes('S')||i.g.includes('A')?'up':''}">${i.g}</td>
+        <td class="sticky-col">${i.t}</td><td class="${i.g.includes('S')?'up':''}">${i.g}</td>
         <td>${i.tm}</td><td>${i.s}</td><td>${i.p}</td>
-        <td class="${i.cur.includes('-')?'down':'up'}">${i.cur}</td>
+        <td class="up">${i.cur}</td>
         <td>${i.w}</td><td>${i.ty}</td><td class="down">${i.d}</td><td>${i.rel}</td>
     `;
     document.getElementById('listBody').appendChild(tr);
@@ -240,7 +216,6 @@ function appendError(t, m) {
     tr.innerHTML = `<td class="sticky-col">${t}</td><td colspan="9" style="color:#999;">${m}</td>`;
     document.getElementById('listBody').appendChild(tr);
 }
-
 window.onload = renderChips;
 </script>
 </body>
