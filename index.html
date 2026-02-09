@@ -2,29 +2,27 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SR Board Final Fixed</title>
+    <title>SR Board Pro (Secure)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --bg: #0d1117; --card: #161b22; --point: #00ff88; --text: #c9d1d9; --up: #f85149; --down: #58a6ff; --border: #30363d; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding-bottom: 50px; }
         header { text-align: center; padding: 15px; font-size: 1.2rem; font-weight: bold; color: var(--point); border-bottom: 1px solid var(--border); }
         .controls { padding: 15px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 100; }
-        .input-group { display: flex; gap: 5px; margin-bottom: 12px; }
-        .input-ticker { background: #0d1117; color: white; border: 1px solid var(--border); padding: 12px; border-radius: 4px; flex-grow: 1; text-transform: uppercase; }
-        .btn-add { background: var(--border); color: white; border: none; padding: 0 20px; border-radius: 4px; font-size: 1.5rem; cursor: pointer; }
-        .chip-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-        .ticker-chip { background: #21262d; padding: 6px 12px; border-radius: 18px; font-size: 0.85rem; border: 1px solid var(--border); display: flex; align-items: center; }
-        .chip-del { margin-left: 8px; color: var(--up); cursor: pointer; font-weight: bold; }
-        .btn-analyze { background: var(--point); color: #000; font-weight: bold; border: none; padding: 15px; border-radius: 4px; width: 100%; cursor: pointer; }
-        .status-msg { text-align: center; font-size: 0.85rem; color: var(--point); margin-top: 10px; }
+        .input-group { display: flex; gap: 5px; margin-bottom: 10px; }
+        .input-box { background: #0d1117; color: white; border: 1px solid var(--border); padding: 10px; border-radius: 4px; font-size: 0.9rem; }
+        .input-ticker { flex-grow: 1; text-transform: uppercase; }
+        .btn-add { background: var(--border); color: white; border: none; padding: 0 15px; border-radius: 4px; cursor: pointer; }
+        .btn-analyze { background: var(--point); color: #000; font-weight: bold; border: none; padding: 15px; border-radius: 4px; width: 100%; cursor: pointer; margin-top: 10px; }
+        .status-msg { text-align: center; font-size: 0.8rem; color: var(--point); margin-top: 8px; }
         .table-container { overflow-x: auto; width: 100%; }
-        table { border-collapse: collapse; width: 100%; min-width: 900px; font-size: 0.85rem; }
-        th { background: #161b22; color: #8b949e; padding: 12px; border-bottom: 1px solid var(--border); }
-        td { padding: 15px 10px; text-align: center; border-bottom: 1px solid #21262d; }
-        .sticky-col { position: sticky; left: 0; background: var(--card); z-index: 10; border-right: 2px solid var(--border); color: var(--point); font-weight: bold; }
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 300; justify-content: center; align-items: center; }
-        .modal-content { background: var(--card); padding: 20px; border-radius: 8px; width: 80%; max-width: 400px; border: 1px solid var(--point); }
+        table { border-collapse: collapse; width: 100%; min-width: 900px; font-size: 0.8rem; }
+        th { background: #161b22; color: #8b949e; padding: 10px; border-bottom: 1px solid var(--border); }
+        td { padding: 12px 8px; text-align: center; border-bottom: 1px solid #21262d; }
+        .sticky-col { position: sticky; left: 0; background: var(--card); z-index: 10; font-weight: bold; color: var(--point); border-right: 1px solid var(--border); }
         .up { color: var(--up); } .down { color: var(--down); }
+        .chip { display: inline-block; background: #21262d; padding: 4px 10px; border-radius: 15px; margin: 0 5px 5px 0; font-size: 0.8rem; }
+        .chip-del { color: var(--up); margin-left: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -33,10 +31,13 @@
 
 <div class="controls">
     <div class="input-group">
-        <input type="text" id="newTicker" class="input-ticker" placeholder="TSLA, AAPL 등 입력">
+        <input type="password" id="apiKey" class="input-box" style="width: 100%;" placeholder="Alpha Vantage API Key 입력">
+    </div>
+    <div class="input-group">
+        <input type="text" id="newTicker" class="input-box input-ticker" placeholder="티커 입력 (예: TSLA)">
         <button class="btn-add" onclick="addTicker()">+</button>
     </div>
-    <div id="tickerChips" class="chip-container"></div>
+    <div id="tickerChips" style="margin-bottom: 10px;"></div>
     <button id="mainBtn" class="btn-analyze" onclick="startAnalysis()">실시간 분석 실행</button>
     <div id="statusMsg" class="status-msg"></div>
 </div>
@@ -50,21 +51,12 @@
     </table>
 </div>
 
-<div id="modal" onclick="this.style.display='none'">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <div id="modalTitle" style="color:var(--point); font-weight:bold; margin-bottom:10px;"></div>
-        <div id="modalBody" style="font-size:0.9rem; line-height:1.6; white-space: pre-wrap;"></div>
-    </div>
-</div>
-
 <script>
-const API_KEY = 'E66HQF56XV4CNNST'; // 반드시 본인 키 입력
 let myTickers = JSON.parse(localStorage.getItem('my_tickers')) || ['TSLA'];
-let finalResults = [];
 
 function renderChips() {
     document.getElementById('tickerChips').innerHTML = myTickers.map(t => `
-        <div class="ticker-chip">${t}<span class="chip-del" onclick="removeTicker('${t}')">×</span></div>
+        <span class="chip">${t}<span class="chip-del" onclick="removeTicker('${t}')">×</span></span>
     `).join('');
 }
 
@@ -85,105 +77,75 @@ function removeTicker(t) {
 }
 
 async function startAnalysis() {
+    const key = document.getElementById('apiKey').value.trim();
+    if(!key) return alert("API 키를 입력해주세요.");
+    
     const body = document.getElementById('listBody');
     const msg = document.getElementById('statusMsg');
-    const btn = document.getElementById('mainBtn');
+    body.innerHTML = "";
     
-    btn.disabled = true;
-    body.innerHTML = ""; 
-    finalResults = [];
-
     for (let i = 0; i < myTickers.length; i++) {
         const t = myTickers[i];
-        msg.innerText = `${t} 분석중... (${i+1}/${myTickers.length})`;
+        msg.innerText = `${t} 분석 중... (${i+1}/${myTickers.length})`;
         
         try {
-            // 주소에 https:// 인지 다시 확인
-            const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${t}&apikey=${API_KEY}`;
-            const res = await fetch(url);
+            const res = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${t}&apikey=${key}`);
             const data = await res.json();
 
-            // 1. API 초과 메시지 확인
             if (data["Note"] || data["Information"]) {
-                appendError(t, "API 제한됨(잠시후 다시)");
+                appendError(t, "제한됨 (1분 후 시도)");
                 break;
             }
 
-            // 2. 데이터 구조 찾기 (유연한 대응)
-            const timeKey = Object.keys(data).find(key => key.includes("Time Series"));
-            if (timeKey && data[timeKey]) {
-                const processed = processData(t, data[timeKey]);
-                finalResults.push(processed);
-                appendRow(processed, finalResults.length - 1);
+            const timeKey = Object.keys(data).find(k => k.includes("Time Series"));
+            if (timeKey) {
+                const processed = process(t, data[timeKey]);
+                appendRow(processed);
             } else {
-                appendError(t, data["Error Message"] ? "티커 오류" : "응답 구조 이상");
-                console.log(data); // 디버깅용
+                appendError(t, "데이터 없음");
             }
-        } catch (e) {
-            appendError(t, "네트워크 오류");
-        }
+        } catch (e) { appendError(t, "실패"); }
 
         if (i < myTickers.length - 1) await new Promise(r => setTimeout(r, 13000));
     }
     msg.innerText = "분석 완료";
-    btn.disabled = false;
 }
 
-function processData(ticker, timeSeries) {
-    const dates = Object.keys(timeSeries);
-    const h = dates.map(d => timeSeries[d]);
-    
-    // 데이터 추출
-    const lastClose = parseFloat(h[0]['4. close']);
-    const lastOpen = parseFloat(h[0]['1. open']);
-    const prevClose = parseFloat(h[1]['4. close']);
-    const lastVol = parseInt(h[0]['5. volume']);
-    const prevVol = parseInt(h[1]['5. volume']);
+function process(ticker, data) {
+    const dates = Object.keys(data);
+    const h = dates.map(d => data[d]);
+    const c = parseFloat(h[0]['4. close']), pc = parseFloat(h[1]['4. close']), o = parseFloat(h[0]['1. open']);
+    const v = parseInt(h[0]['5. volume']), pv = parseInt(h[1]['5. volume']);
 
-    // [로직] 매집봉 존재 + 횡보/하락 기준
-    const isStealth = (lastVol > prevVol * 4.0) && (Math.abs(lastClose - lastOpen) / lastOpen < 0.05);
-    
-    // 세력평단가 (100일 가중치)
-    let totalVol = 0, totalVal = 0;
+    const isStealth = (v > pv * 4.0) && (Math.abs(c - o) / o < 0.05);
+    let vSum = 0, pSum = 0;
     h.slice(0, 100).forEach(d => {
-        const v = parseInt(d['5. volume']);
-        totalVol += v;
-        totalVal += (parseFloat(d['4. close']) * v);
+        const vol = parseInt(d['5. volume']);
+        vSum += vol;
+        pSum += (parseFloat(d['4. close']) * vol);
     });
-    const whaleAvg = totalVal / totalVol;
-    const gap = ((whaleAvg - lastClose) / lastClose * 100);
-
-    let score = 65;
-    if(isStealth) score += 25;
-    if(gap > 10) score += 10;
-    
-    const grade = score > 85 ? 'S' : (score > 75 ? 'A' : 'B');
+    const whale = pSum / vSum;
+    const gap = ((whale - c) / c * 100);
+    const score = 65 + (isStealth ? 25 : 0) + (gap > 10 ? 10 : 0);
 
     return {
-        ticker, grade: `${grade} (${score}%)`, timing: score > 88 ? "오늘" : "1~3일내",
-        scale: `A (${(lastClose*1.5).toFixed(2)})`, prev: prevClose.toFixed(2), 
-        curr: `${lastClose.toFixed(2)} (${((lastClose-prevClose)/prevClose*100).toFixed(1)}%)`,
-        whale: `${whaleAvg.toFixed(2)} (${gap.toFixed(1)}%)`, 
-        type: gap > 15 ? "세력매집" : "횡보중",
-        down: `${(lastClose*0.8).toFixed(2)}`, rel: score + "%",
-        reasons: `[매집 분석 결과]\n${isStealth ? "▶ 스텔스 매집봉 발견됨" : "▶ 눈에 띄는 매집봉 없음"}\n▶ 세력 평단가: ${whaleAvg.toFixed(2)}\n▶ 현재가와 괴리율: ${gap.toFixed(1)}%`
+        t: ticker, g: `${score > 85 ? 'S' : (score > 75 ? 'A' : 'B')} (${score}%)`,
+        tm: score > 88 ? "오늘" : "1~3일", s: (c*1.5).toFixed(2), p: pc.toFixed(2),
+        cur: `${c.toFixed(2)} (${((c-pc)/pc*100).toFixed(1)}%)`,
+        w: `${whale.toFixed(2)} (${gap.toFixed(1)}%)`,
+        ty: gap > 15 ? "세력매집" : "횡보", d: (c*0.8).toFixed(2), r: score + "%"
     };
 }
 
-function appendRow(i, idx) {
+function appendRow(i) {
     const tr = document.createElement('tr');
-    tr.onclick = () => {
-        document.getElementById('modalTitle').innerText = i.ticker + " 분석 상세";
-        document.getElementById('modalBody').innerText = i.reasons;
-        document.getElementById('modal').style.display = 'flex';
-    };
-    tr.innerHTML = `<td class="sticky-col">${i.ticker}</td><td style="color:var(--point)">${i.grade}</td><td>${i.timing}</td><td>${i.scale}</td><td>${i.prev}</td><td class="up">${i.curr}</td><td>${i.whale}</td><td>${i.type}</td><td class="down">${i.down}</td><td>${i.rel}</td>`;
+    tr.innerHTML = `<td class="sticky-col">${i.t}</td><td class="up">${i.g}</td><td>${i.tm}</td><td>${i.s}</td><td>${i.p}</td><td class="up">${i.cur}</td><td>${i.w}</td><td>${i.ty}</td><td class="down">${i.d}</td><td>${i.r}</td>`;
     document.getElementById('listBody').appendChild(tr);
 }
 
-function appendError(t, txt) {
+function appendError(t, m) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="sticky-col">${t}</td><td colspan="9" style="color:#666;">${txt}</td>`;
+    tr.innerHTML = `<td class="sticky-col">${t}</td><td colspan="9">${m}</td>`;
     document.getElementById('listBody').appendChild(tr);
 }
 
