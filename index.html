@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SR Board Pro - V5.8 (Final Sync)</title>
+    <title>SR Board Pro - V5.9</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         :root { --bg: #f2f2f7; --point: #007aff; --up: #ff3b30; --down: #007aff; --text: #1c1c1e; --border: #d1d1d6; }
@@ -23,16 +23,16 @@
 </head>
 <body>
 
-<header>SR BOARD PRO V5.8</header>
+<header>SR BOARD PRO V5.9</header>
 <div class="controls">
     <div class="control-inner">
         <input type="password" id="apiKey" class="input-box" placeholder="API Key 입력">
         <div style="display:flex; gap:8px;">
-            <input type="text" id="newTicker" class="input-box" placeholder="TICKER">
+            <input type="text" id="newTicker" class="input-box" placeholder="티커">
             <button onclick="addTicker()" style="padding:0 20px; background:#1d1d1f; color:#fff; border-radius:10px; border:none;">+</button>
         </div>
-        <div id="tickerChips" style="margin-top:5px;"></div>
-        <button class="btn-analyze" onclick="startAnalysis()">실질 변별력 분석 실행</button>
+        <div id="tickerChips"></div>
+        <button class="btn-analyze" onclick="startAnalysis()">임박성 우선 분석 실행</button>
         <div id="statusMsg" style="text-align:center; font-size:0.8rem; color:var(--point); margin-top:8px; font-weight:600;"></div>
     </div>
 </div>
@@ -77,7 +77,7 @@ async function startAnalysis() {
     
     for (let i = 0; i < myTickers.length; i++) {
         const t = myTickers[i];
-        document.getElementById('statusMsg').innerText = `${t} 정밀 분석 중...`;
+        document.getElementById('statusMsg').innerText = `${t} 분석 중...`;
         try {
             const res = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${t}&apikey=${key}`);
             const data = await res.json();
@@ -90,7 +90,7 @@ async function startAnalysis() {
                 const vol = parseInt(h[0]['5. volume']);
                 const avgVol = h.slice(1, 21).reduce((s, x) => s + parseInt(x['5. volume']), 0) / 20;
 
-                // 1. 세력평단 계산 (가중치 적용)
+                // 1. 세력평단 및 괴리율
                 let vSum = 0, pSum = 0;
                 h.slice(0, 40).forEach((d, idx) => {
                     const v = parseInt(d['5. volume']);
@@ -101,40 +101,48 @@ async function startAnalysis() {
                 const whaleAvg = pSum / vSum;
                 const gap = ((whaleAvg - curP) / curP * 100);
 
-                // 2. 동적 하방라인 (ATR 대용 변동성 수식)
-                const prices = h.slice(0, 20).map(x => parseFloat(x['4. close']));
+                // 2. 하방라인 (종목별 변동성 정밀화)
+                const prices = h.slice(0, 15).map(x => parseFloat(x['4. close']));
                 const range = Math.max(...prices) - Math.min(...prices);
-                const volatilityFactor = (range / curP) * 100;
-                const downPct = Math.min(30, Math.max(10, volatilityFactor * 1.8)); // 변동성에 따른 유동적 %
+                const downPct = Math.min(22, Math.max(9, (range / curP * 100) * 1.2));
                 const downPrice = preP * (1 - (downPct / 100));
 
-                // 3. 신뢰도 분산 로직 (변별력 확보)
-                const spikeDays = h.slice(1, 30).filter(d => parseInt(d['5. volume']) > avgVol * 3.2).length;
-                let rel = 72 + (spikeDays * 3.5) + (gap > 10 ? 7 : 0) - (vol > avgVol * 2 ? 5 : 0);
-                rel = Math.min(99.4, Math.max(68, rel + (Math.random() * 4)));
+                // 3. 임박성 중심 신뢰도/시기 산출
+                const spikeCount = h.slice(1, 25).filter(d => parseInt(d['5. volume']) > avgVol * 3.2).length;
+                const momentum = (vol > avgVol * 1.8) ? 15 : (vol < avgVol * 0.6 ? 5 : 0);
+                let reliability = 60 + (spikeCount * 5) + (gap > 8 ? 10 : 0) + momentum;
+                reliability = Math.min(99.1, reliability);
 
-                // 4. 유형분류 및 등급
+                let timing = "5일+";
+                if (reliability > 90 && vol > avgVol * 1.5) timing = "즉시";
+                else if (reliability > 82) timing = "1~3일";
+                else if (reliability > 70) timing = "3~5일";
+
+                // 4. 유형분류 및 종합등급 (S등급 문턱 대폭 강화)
                 let type = "관망";
                 if (gap > 12 && vol < avgVol * 0.7) type = "가격억제";
-                else if (spikeDays > 0 && vol < avgVol * 0.6) type = "수급응축";
-                else if (spikeDays > 0 && curP < preP) type = "개미털기";
+                else if (spikeCount > 0 && vol < avgVol * 0.6) type = "수급응축";
                 else if (gap > 5 && vol > avgVol * 2.0) type = "발사임박";
-                else if (spikeDays > 0 || gap > 8) type = "왜곡매집";
+                else if (spikeCount > 0) type = "왜곡매집";
 
                 const max60 = Math.max(...h.slice(0, 60).map(x => parseFloat(x['2. high'])));
-                const scaleGrade = max60 / curP > 1.4 ? "S" : (max60 / curP > 1.2 ? "A" : "B");
-                const gradeStr = rel > 91 ? "S+" : (rel > 83 ? "S" : "A");
+                const scaleGrade = (max60 / curP > 1.6) ? "S" : ((max60 / curP > 1.3) ? "A" : "B");
+                
+                // 종합등급: 신뢰도가 높아도 타이밍이 멀면 S가 안 나옴
+                let gradeStr = (reliability > 88 && (timing === "즉시" || timing === "1~3일")) ? "S" : "A";
+                if (reliability > 93 && timing === "즉시") gradeStr = "S+";
+                if (reliability < 75) gradeStr = "B";
 
                 const resObj = {
                     t: t,
-                    grade: `${gradeStr}(${rel.toFixed(1)})`,
-                    timing: rel > 92 ? "즉시" : (rel > 85 ? "1~3일" : "5일+"),
-                    scale: `${scaleGrade} (${max60.toFixed(2)} / ${(max60*1.35).toFixed(2)})`, // 포맷 고정
+                    grade: `${gradeStr}(${reliability.toFixed(1)})`,
+                    timing: timing,
+                    scale: `${scaleGrade} (${max60.toFixed(2)} / ${(max60*1.3).toFixed(2)})`,
                     base: preP.toFixed(2),
-                    whale: `${whaleAvg.toFixed(2)} (${gap.toFixed(1)}%)`, // 포맷 고정
+                    whale: `${whaleAvg.toFixed(2)} (${gap.toFixed(1)}%)`,
                     type: type,
-                    down: `-${downPct.toFixed(1)}% (${downPrice.toFixed(2)})`, // 포맷 고정
-                    scoreRaw: rel.toFixed(1)
+                    down: `-${downPct.toFixed(1)}% (${downPrice.toFixed(2)})`,
+                    scoreRaw: reliability.toFixed(1)
                 };
                 
                 lastResults.push(resObj);
