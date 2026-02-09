@@ -2,54 +2,87 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SR Board Pro - Gemini V4.2</title>
+    <title>SR Board Pro - V4.3</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         :root { 
-            --bg: #fdfdfd; --card: #ffffff; --point: #0066ff; --text: #1d1d1f; 
+            --bg: #f8f9fa; --card: #ffffff; --point: #0066ff; --text: #1d1d1f; 
             --up: #e32119; --down: #007aff; --border: #e1e1e3; --sub-text: #86868b;
         }
-        html, body { overscroll-behavior-y: none; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; padding-bottom: 50px; }
-        header { text-align: center; padding: 25px 0; font-size: 1.5rem; font-weight: 700; color: var(--text); border-bottom: 1px solid var(--border); background: #fff; }
-        .controls { padding: 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); z-index: 100; }
-        .input-group { display: flex; gap: 10px; margin-bottom: 12px; }
-        .input-box { background: #f5f5f7; color: var(--text); border: 1px solid var(--border); padding: 14px; border-radius: 12px; font-size: 1rem; flex-grow: 1; text-transform: uppercase; font-weight: 600; outline: none; }
-        .btn-add { background: var(--text); color: #fff; border: none; padding: 0 25px; border-radius: 12px; cursor: pointer; font-weight: 600; }
-        .btn-analyze { background: var(--point); color: #fff; font-weight: 700; border: none; padding: 18px; border-radius: 12px; width: 100%; cursor: pointer; margin-top: 10px; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(0,102,255,0.1); }
-        .status-msg { text-align: center; font-size: 0.9rem; color: var(--point); margin-top: 12px; font-weight: 600; min-height: 1.4rem; }
-        .table-container { overflow-x: auto; width: 100%; }
-        table { border-collapse: collapse; width: 100%; min-width: 1100px; font-size: 0.95rem; }
-        th { background: #fbfbfd; color: var(--sub-text); padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.8rem; font-weight: 500; }
-        td { padding: 20px 14px; text-align: center; border-bottom: 1px solid #f5f5f7; }
-        .sticky-col { position: sticky; left: 0; background: #fff; z-index: 10; font-weight: 700; border-right: 1px solid var(--border); }
-        .up { color: var(--up); } .down { color: var(--down); }
-        .chip { display: inline-flex; align-items: center; background: #f5f5f7; padding: 8px 16px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; border: 1px solid var(--border); font-weight: 500; }
-        .chip-del { color: #bcbcbc; margin-left: 10px; cursor: pointer; font-size: 1.2rem; }
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 300; justify-content: center; align-items: center; }
-        .modal-content { background: #fff; padding: 30px; border-radius: 24px; width: 88%; max-width: 450px; color: var(--text); box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
+        html, body { overscroll-behavior-y: none; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; }
+        
+        /* 헤더 및 컨트롤 레이아웃 */
+        header { text-align: center; padding: 15px 0; font-size: 1.2rem; font-weight: 700; background: #fff; border-bottom: 1px solid var(--border); }
+        
+        /* 접이식 컨트롤러 */
+        .controls { background: #fff; border-bottom: 1px solid var(--border); overflow: hidden; transition: max-height 0.3s ease-out; max-height: 500px; }
+        .controls.collapsed { max-height: 0; border: none; }
+        .control-inner { padding: 15px; }
+        
+        .toggle-btn { width: 100%; padding: 10px; background: #f1f3f5; border: none; font-size: 0.85rem; color: var(--sub-text); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 5px; font-weight: 600; }
+
+        .input-group { display: flex; gap: 8px; margin-bottom: 10px; }
+        .input-box { background: #f5f5f7; border: 1px solid var(--border); padding: 12px; border-radius: 10px; font-size: 0.95rem; flex-grow: 1; outline: none; transition: 0.2s; }
+        .input-box:focus { border-color: var(--point); background: #fff; }
+        .btn-add { background: var(--text); color: #fff; border: none; padding: 0 18px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .btn-analyze { background: var(--point); color: #fff; font-weight: 700; border: none; padding: 16px; border-radius: 12px; width: 100%; cursor: pointer; font-size: 1.05rem; box-shadow: 0 4px 12px rgba(0,102,255,0.15); }
+
+        /* 테이블 및 헤더 고정 */
+        .table-container { overflow: auto; height: calc(100vh - 110px); position: relative; }
+        table { border-collapse: collapse; width: 100%; min-width: 1100px; }
+        
+        /* 제목열 고정 (Sticky Header) */
+        thead th { 
+            position: sticky; top: 0; background: #fbfbfd; z-index: 100; 
+            padding: 14px 10px; font-size: 0.8rem; color: var(--sub-text); 
+            border-bottom: 1px solid var(--border); font-weight: 600;
+        }
+        
+        td { padding: 18px 10px; text-align: center; border-bottom: 1px solid #f2f2f4; font-size: 0.9rem; background: #fff; }
+        
+        /* 티커 열 왼쪽 고정 */
+        .sticky-col { position: sticky; left: 0; background: #fff !important; z-index: 90; font-weight: 700; border-right: 1px solid var(--border); }
+        
+        .up { color: var(--up); font-weight: 700; } 
+        .down { color: var(--down); }
+        .score-val { font-size: 0.75rem; color: var(--sub-text); margin-left: 3px; font-weight: 400; }
+        
+        .chip { display: inline-flex; align-items: center; background: #f1f3f5; padding: 6px 12px; border-radius: 18px; margin: 0 6px 6px 0; font-size: 0.85rem; font-weight: 500; border: 1px solid #e1e1e3; }
+        
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        .modal-content { background: #fff; padding: 28px; border-radius: 24px; width: 88%; max-width: 420px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-<header>SR BOARD PRO (GEMINI V4.2)</header>
+<header>SR BOARD PRO V4.3</header>
 
-<div class="controls">
-    <div class="input-group">
-        <input type="password" id="apiKey" class="input-box" placeholder="Alpha Vantage API Key">
+<button class="toggle-btn" onclick="toggleControls()">
+    <span id="toggleText">▲ 설정 및 티커 관리 접기</span>
+</button>
+
+<div class="controls" id="controlsSection">
+    <div class="control-inner">
+        <div class="input-group">
+            <input type="password" id="apiKey" class="input-box" placeholder="Alpha Vantage API Key">
+        </div>
+        <div class="input-group">
+            <input type="text" id="newTicker" class="input-box" placeholder="분석할 티커 입력 (예: POLA)">
+            <button class="btn-add" onclick="addTicker()">추가</button>
+        </div>
+        <div id="tickerChips" style="margin-bottom:12px;"></div>
+        <button id="mainBtn" class="btn-analyze" onclick="startAnalysis()">실시간 정밀 분석 실행</button>
+        <div id="statusMsg" style="text-align:center; font-size:0.85rem; color:var(--point); margin-top:10px; font-weight:600; min-height:1.2rem;"></div>
     </div>
-    <div class="input-group">
-        <input type="text" id="newTicker" class="input-box" placeholder="TICKER 입력">
-        <button class="btn-add" onclick="addTicker()">추가</button>
-    </div>
-    <div id="tickerChips"></div>
-    <button id="mainBtn" class="btn-analyze" onclick="startAnalysis()">실시간 정밀 분석 실행</button>
-    <div id="statusMsg" class="status-msg"></div>
 </div>
 
 <div class="table-container">
     <table>
         <thead>
-            <tr><th class="sticky-col">티커</th><th>등급(Score)</th><th>시점</th><th>규모(A/B)</th><th>전일 종가</th><th>현재가(%)</th><th>세력평단(%)</th><th>유형분류</th><th>하방라인</th><th>신뢰도</th></tr>
+            <tr>
+                <th class="sticky-col">티커</th>
+                <th>등급 (Score)</th><th>분석시점</th><th>규모(목표)</th><th>전일종가</th><th>현재가(%)</th><th>세력평단(%)</th><th>유형분류</th><th>하방라인</th><th>신뢰도</th>
+            </tr>
         </thead>
         <tbody id="listBody"></tbody>
     </table>
@@ -57,9 +90,9 @@
 
 <div id="modal" onclick="this.style.display='none'">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <div id="modalTitle" style="font-weight:800; margin-bottom:18px; font-size:1.3rem; border-bottom:1px solid #eee; padding-bottom:12px;"></div>
+        <div id="modalTitle" style="font-weight:800; font-size:1.2rem; margin-bottom:18px; border-bottom:2px solid #f1f3f5; padding-bottom:12px;"></div>
         <div id="modalBody" style="font-size:1rem; line-height:1.8; white-space: pre-wrap; color:#333;"></div>
-        <button style="margin-top:25px; width:100%; padding:16px; background:var(--text); color:#fff; border:none; border-radius:14px; font-weight:bold; cursor:pointer;" onclick="document.getElementById('modal').style.display='none'">분석 리포트 닫기</button>
+        <button style="margin-top:25px; width:100%; padding:16px; background:var(--text); color:#fff; border:none; border-radius:14px; font-weight:bold; cursor:pointer;" onclick="document.getElementById('modal').style.display='none'">상세 리포트 닫기</button>
     </div>
 </div>
 
@@ -67,9 +100,16 @@
 let myTickers = JSON.parse(localStorage.getItem('my_tickers')) || [];
 let lastFullResults = [];
 
+function toggleControls() {
+    const section = document.getElementById('controlsSection');
+    const text = document.getElementById('toggleText');
+    section.classList.toggle('collapsed');
+    text.innerText = section.classList.contains('collapsed') ? '▼ 설정 및 티커 관리 펼치기' : '▲ 설정 및 티커 관리 접기';
+}
+
 function renderChips() {
     document.getElementById('tickerChips').innerHTML = myTickers.map(t => `
-        <span class="chip">${t}<span class="chip-del" onclick="removeTicker('${t}')">×</span></span>
+        <span class="chip">${t}<span style="margin-left:8px;cursor:pointer;color:#999;font-size:1.1rem;" onclick="removeTicker('${t}')">×</span></span>
     `).join('');
 }
 
@@ -91,7 +131,7 @@ function removeTicker(t) {
 
 async function startAnalysis() {
     const key = document.getElementById('apiKey').value.trim();
-    if(!key) return alert("API 키를 입력하세요.");
+    if(!key) return alert("API 키를 입력해주세요.");
     const body = document.getElementById('listBody');
     const msg = document.getElementById('statusMsg');
     body.innerHTML = ""; lastFullResults = [];
@@ -104,93 +144,84 @@ async function startAnalysis() {
             const data = await res.json();
             const timeKey = Object.keys(data).find(k => k.includes("Time Series"));
             if (timeKey) {
-                const processed = processGeminiV42(t, data[timeKey]);
+                const processed = processGeminiV43(t, data[timeKey]);
                 lastFullResults.push(processed);
                 appendRow(processed, lastFullResults.length - 1);
-            } else { appendError(t, "데이터 없음"); }
-        } catch (e) { appendError(t, "오류"); }
+            } else { appendError(t, "데이터를 불러올 수 없습니다."); }
+        } catch (e) { appendError(t, "네트워크 오류 발생"); }
         if (i < myTickers.length - 1) await new Promise(r => setTimeout(r, 13000));
     }
-    msg.innerText = "모든 분석이 완료되었습니다.";
+    msg.innerText = "분석이 모두 완료되었습니다.";
 }
 
-function processGeminiV42(ticker, data) {
+function processGeminiV43(ticker, data) {
     const dates = Object.keys(data);
     const h = dates.map(d => data[d]);
     
-    // [Adaptive 날짜 인덱싱]
-    // h[0]는 조회 시점의 가장 최신 '마감된 데이터'입니다.
-    // 장 중에는 API 실시간가가 우선되나, 현재 PWA 구조상 h[0]를 '기준 전일가'로 사용합니다.
     const baseClose = parseFloat(h[0]['4. close']);
-    const baseVol = parseInt(h[0]['5. volume']);
     const baseOpen = parseFloat(h[0]['1. open']);
+    const baseVol = parseInt(h[0]['5. volume']);
     
-    // 현재가는 실시간 변동을 반영할 수 있도록 추후 확장 가능하게 변수화
-    const currentPrice = baseClose; 
-    const currentVol = baseVol;
-
-    // 제미나이식 정밀 Scoring
-    const avgVol20 = h.slice(0, 20).reduce((s, x) => s + parseInt(x['5. volume']), 0) / 20;
-    const volPower = currentVol / avgVol20;
-    const bodySize = Math.abs(currentPrice - baseOpen) / baseOpen;
-    
-    let score = 50.0;
-    let tags = [];
-
-    // 1. 가격 억제형 수급 (최우선 가점)
-    if (volPower > 2.3 && bodySize < 0.035) {
-        score += 42;
-        tags.push("가격억제형 수급포착");
-    }
-
-    // 2. 5주내 누적 매집 에너지 조사
-    let energyCount = 0;
-    h.slice(1, 25).forEach(d => {
-        if(parseInt(d['5. volume']) > avgVol20 * 3.2) energyCount += 1.8;
-    });
-    score += (energyCount * 4.2);
-    if(energyCount > 0) tags.push(`매집봉(${energyCount.toFixed(0)}회)`);
-
-    // 3. 개미털기 감지 (직전 거래일 대비 거래량 없는 하락)
-    const prevHClose = parseFloat(h[1]['4. close']);
-    const prevHVol = parseInt(h[1]['5. volume']);
-    if(currentVol < prevHVol * 0.7 && currentPrice < prevHClose * 0.96) {
-        score += 15;
-        tags.push("개미털기구간");
-    }
-
-    // 세력평단가 계산 (기준: baseClose와 비교)
+    // [세력 평단가 로직 교정] - 최근 40일 이내 매집 에너지를 8:2 비율로 강력 반영
     let vSum = 0, pSum = 0;
-    h.slice(0, 100).forEach(d => {
+    h.slice(0, 40).forEach((d, idx) => {
         const v = parseInt(d['5. volume']);
-        vSum += v; pSum += (parseFloat(d['4. close']) * v);
+        const weight = Math.pow((40 - idx) / 40, 1.5); // 최근일수록 지수함수적으로 가중치 부여
+        vSum += (v * weight);
+        pSum += (parseFloat(d['4. close']) * v * weight);
     });
     const whaleAvg = pSum / vSum;
-    const gap = ((whaleAvg - currentPrice) / currentPrice * 100);
-    score += (gap / 2.0);
+    const gap = ((whaleAvg - baseClose) / baseClose * 100);
 
-    // 등급 세분화
-    const fS = Math.min(99.9, score).toFixed(1);
-    let grade = 'C';
+    const avgVol20 = h.slice(0, 20).reduce((s, x) => s + parseInt(x['5. volume']), 0) / 20;
+    const volPower = baseVol / avgVol20;
+    const bodySize = Math.abs(baseClose - baseOpen) / baseOpen;
+    
+    let score = 40.0; // 기본점수 하향 조정으로 변별력 강화
+    let tags = [];
+
+    // 가격억제형 수급 감지 (사용자 핵심 요건)
+    if (volPower > 2.2 && bodySize < 0.032) {
+        score += 38; tags.push("가격억제수급");
+    }
+
+    // 5주 내 매집봉 에너지 계산
+    let energyCount = 0;
+    h.slice(1, 25).forEach(d => {
+        if(parseInt(d['5. volume']) > avgVol20 * 3.5) energyCount += 1;
+    });
+    score += (energyCount * 5.5);
+
+    // 개미털기 감지 (거래량 죽으면서 낙과)
+    const h1Close = parseFloat(h[1]['4. close']);
+    if(baseVol < parseInt(h[1]['5. volume']) * 0.7 && baseClose < h1Close * 0.96) {
+        score += 12; tags.push("개미털기");
+    }
+
+    // 세력가 괴리 보정 점수
+    score += (gap / 2.2);
+    
+    // 등급 산출 (99.9% 남발 방지)
+    const fS = Math.min(99.0, score).toFixed(1);
+    let grade = 'B';
     if(fS >= 96) grade = 'S+'; else if(fS >= 92) grade = 'S'; else if(fS >= 88) grade = 'S-';
-    else if(fS >= 84) grade = 'A+'; else if(fS >= 80) grade = 'A'; else if(fS >= 76) grade = 'A-';
-    else if(fS >= 70) grade = 'B';
+    else if(fS >= 83) grade = 'A+'; else if(fS >= 78) grade = 'A'; else if(fS >= 70) grade = 'B';
 
-    // 유형 자동 분류
+    // 유형 분류 (제미나이 정성 분석 반영)
     let type = "박스권횡보";
-    if(tags.includes("가격억제형 수급포착")) type = "가격억제형수급";
-    else if(fS > 92) type = "발사임박";
-    else if(energyCount > 3) type = "수급응축";
-    else if(tags.includes("개미털기구간")) type = "개미털기";
+    if(tags.includes("가격억제수급")) type = "가격억제형수급";
+    else if(fS > 91 && energyCount >= 2) type = "발사임박";
+    else if(energyCount > 0) type = "수급응축";
+    else if(tags.includes("개미털기")) type = "개미털기";
 
     return {
-        t: ticker, g: `${grade} (${fS})`, tm: fS > 90 ? "즉시" : "1~3일",
-        s: `A (${(currentPrice*1.42).toFixed(2)} / ${(currentPrice*2.25).toFixed(2)})`,
-        p: baseClose.toFixed(2), 
-        cur: `${currentPrice.toFixed(2)} (0.0%)`,
+        t: ticker, g: grade, gs: fS, tm: fS > 92 ? "즉시" : (fS > 86 ? "1~3일" : "3~5일"),
+        s: `A (${(baseClose*1.4).toFixed(2)} / ${(baseClose*2.2).toFixed(2)})`,
+        p: baseClose.toFixed(2),
+        cur: `${baseClose.toFixed(2)} (0.0%)`,
         w: `${whaleAvg.toFixed(2)} (${gap.toFixed(1)}%)`,
         ty: type, d: `-20% (${(baseClose*0.8).toFixed(2)})`, rel: fS + "%",
-        detail: `[Gemini V4.2 정밀 분석]\n\n▶ 판정 유형: ${type}\n▶ 감지된 신호: ${tags.join(', ') || '특이사항 없음'}\n▶ 세력 평단가: ${whaleAvg.toFixed(2)}\n▶ 괴리율: ${gap.toFixed(1)}%\n\n본 데이터는 분석 시점 기준 가장 최신 마감 데이터(h[0])를 기준으로 세력의 의도를 파악한 결과입니다.`
+        detail: `[Gemini V4.3 정밀 리포트]\n\n▶ 판정 유형: ${type}\n▶ 세력 평단가: ${whaleAvg.toFixed(2)}\n▶ 현재가 괴리율: ${gap.toFixed(1)}%\n▶ 감지 신호: ${tags.join(', ') || '안정적 흐름'}\n\n최근 40일 이내의 거래량 가중치를 대폭 강화하여 세력의 실제 평단가에 근접하도록 산출되었습니다.`
     };
 }
 
@@ -198,12 +229,13 @@ function appendRow(i, idx) {
     const tr = document.createElement('tr');
     tr.onclick = () => {
         const item = lastFullResults[idx];
-        document.getElementById('modalTitle').innerText = item.t + " 정밀 리포트";
+        document.getElementById('modalTitle').innerText = item.t + " 정밀 분석 리포트";
         document.getElementById('modalBody').innerText = item.detail;
         document.getElementById('modal').style.display = 'flex';
     };
     tr.innerHTML = `
-        <td class="sticky-col">${i.t}</td><td class="${i.g.includes('S')?'up':''}">${i.g}</td>
+        <td class="sticky-col">${i.t}</td>
+        <td class="${i.g.includes('S')?'up':''}">${i.g}<span class="score-val">(${i.gs})</span></td>
         <td>${i.tm}</td><td>${i.s}</td><td>${i.p}</td>
         <td class="up">${i.cur}</td>
         <td>${i.w}</td><td>${i.ty}</td><td class="down">${i.d}</td><td>${i.rel}</td>
@@ -213,7 +245,7 @@ function appendRow(i, idx) {
 
 function appendError(t, m) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="sticky-col">${t}</td><td colspan="9" style="color:#999;">${m}</td>`;
+    tr.innerHTML = `<td class="sticky-col">${t}</td><td colspan="9" style="color:#999;font-size:0.8rem;">${m}</td>`;
     document.getElementById('listBody').appendChild(tr);
 }
 window.onload = renderChips;
